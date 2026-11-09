@@ -1,0 +1,114 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: native lib
+        run: WERROR=1 ./build.sh
+      - name: tests
+        run: dotnet run --project tests/GoomeSharp.Tests -c Release
+      - name: examples on the test backend
+        env:
+          GOOME_BACKEND: test
+        run: |
+          mkdir -p ci-out/hello ci-out/ui
+          GOOME_TEST_SHOTS=ci-out/hello GOOME_TEST_SCRIPT="screen 640x360 1; 2 click 120,110; 3 click 150,190; 4 key hi; 5 hotkey alt+h; 6 hotkey alt+h; end 8" \
+            dotnet run --project examples/Hello -c Release
+          GOOME_TEST_SHOTS=ci-out/ui GOOME_TEST_SCRIPT="screen 1280x720 1; 3 click 100,150; 6 click 200,90; end 10" \
+            dotnet run --project examples/UiDemo -c Release
+          GOOME_TEST_SCRIPT="screen 640x360 1; end 3" dotnet run --project examples/Grab -c Release -- 0 10 10 100 50 ci-out/grab.ppm
+          ls ci-out/hello | head -3
+          test -s ci-out/grab.ppm
+      - name: same pixels as the c examples
+        if: runner.os == 'Linux'
+        env:
+          GOOME_BACKEND: test
+        run: |
+          v=$(cat native/VERSION)
+          mkdir -p build/c ci-out/c/hello ci-out/c/ui
+          for e in hello ui; do
+            curl -fsSL "https://raw.githubusercontent.com/goome-ui/c-goome/$v/examples/$e.c" -o build/c/$e.c
+            cc -O2 -std=c99 -Inative -o build/c/$e build/c/$e.c native/goome_lib.c
+          done
+          GOOME_TEST_SHOTS=ci-out/c/hello GOOME_TEST_SCRIPT="screen 640x360 1; 2 click 120,110; 3 click 150,190; 4 key hi; 5 hotkey alt+h; 6 hotkey alt+h; end 8" build/c/hello > /dev/null
+          GOOME_TEST_SHOTS=ci-out/c/ui GOOME_TEST_SCRIPT="screen 1280x720 1; 3 click 100,150; 6 click 200,90; end 10" build/c/ui > /dev/null
+          for e in hello ui; do
+            n=$(ls ci-out/c/$e | wc -l)
+            [ "$n" -gt 0 ] && [ "$n" = "$(ls ci-out/$e | wc -l)" ] || { echo "$e: different frame count"; exit 1; }
+            for f in ci-out/c/$e/*; do cmp "$f" "ci-out/$e/$(basename "$f")" || { echo "$e: $(basename "$f") differs from the c one"; exit 1; }; done
+            echo "$e: all $n frames match the c example"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.os }}
+          path: runtimes/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shots-${{ matrix.os }}
+          path: ci-out/
+          if-no-files-found: ignore
+
+  pack:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: runtimes/
+          merge-multiple: true
+      - name: pack
+        run: |
+          find runtimes -type f
+          dotnet pack src/GoomeSharp -c Release -o out
+          unzip -l out/GoomeSharp.*.nupkg | tee out/contents.txt
+          for f in linux-x64/native/libgoome.so win-x64/native/goome.dll osx-arm64/native/libgoome.dylib osx-x64/native/libgoome.dylib; do
+            grep -q "runtimes/$f" out/contents.txt || { echo "missing $f in the package"; exit 1; }
+          done
+      - name: use the package from a fresh project
+        run: |
+          mkdir -p feed try && cp out/*.nupkg feed/
+          cd try
+          dotnet new console -o . --force
+          dotnet add package GoomeSharp --source ../feed --prerelease
+          cat > Program.cs <<'CS'
+          using GoomeSharp;
+          using var g = new Goome(new GoomeOptions { Backend = Backend.Test, TestScript = "screen 320x200 1; end 2" });
+          var c = g.Begin(0)!;
+          c.DrawCircle(50, 50, 20, 0xFF6FDC5F);
+          g.End(c, new Rect(30, 30, 40, 40));
+          System.Console.WriteLine($"{g.BackendName} {g.Monitors[0].Area} alpha {g.AlphaAt(50, 50)}");
+          if (g.AlphaAt(50, 50) != 255) return 1;
+          return 0;
+          CS
+          dotnet run
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: out/*.nupkg

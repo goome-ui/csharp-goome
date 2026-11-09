@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsAotCompatible>true</IsAotCompatible>
+    <RootNamespace>GoomeSharp</RootNamespace>
+    <AssemblyName>GoomeSharp</AssemblyName>
+    <Version>0.1.0</Version>
+    <PackageId>GoomeSharp</PackageId>
+    <Authors>sevvy-wevvy</Authors>
+    <Description>C# bindings for goome: see-through, always on top overlays with drawing, fonts, images, screen grabs, hotkeys and an immediate mode ui kit.</Description>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/goome-ui/csharp-goome</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/goome-ui/csharp-goome</RepositoryUrl>
+    <PackageTags>overlay;ui;immediate-mode;screen-capture;hotkeys;goome</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoWarn>$(NoWarn);CA2255</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../runtimes/**/*.so;../../runtimes/**/*.dll;../../runtimes/**/*.dylib" Pack="true" PackagePath="runtimes/" CopyToOutputDirectory="PreserveNewest" Link="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>
