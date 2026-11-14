@@ -1,0 +1,9 @@
+bin/
+obj/
+build/
+out/
+runtimes/
+*.nupkg
+.vs/
+.idea/
+*.user

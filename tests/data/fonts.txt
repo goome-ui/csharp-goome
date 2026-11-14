@@ -1,0 +1,1 @@
+sub.ttf and sub.otf are a tiny DejaVu Sans subset (Bitstream Vera / DejaVu fonts license), the same bytes as tests/fontdata.h in c-goome.
