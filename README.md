@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/C%23-.NET%208%2B%20%7C%20netstandard2.1-6fdc5f?style=flat-square&logo=dotnet&logoColor=1b1d22&labelColor=6fdc5f" alt=".NET 8+ and netstandard2.1">
+  <img src="https://goome-ui.github.io/docs/assets/badges/csharp-net8-netstandard21.svg" alt=".NET 8+ and netstandard2.1">
   <img src="https://img.shields.io/badge/Unity-2021.3%2B-1b1d22?style=flat-square&logo=unity&logoColor=white" alt="Unity 2021.3+">
   <img src="https://img.shields.io/badge/Linux-X11%20%2B%20Wayland-1b1d22?style=flat-square&logo=linux&logoColor=white" alt="Linux">
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-1b1d22?style=flat-square&logo=windows11&logoColor=white" alt="Windows">
