@@ -1,0 +1,22 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <UnityVersion Condition="'$(UnityVersion)' == ''">2019.4.40</UnityVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UsesUnity)' == 'true' and ('$(GameDlls)' == '' or '$(MSBuildProjectName)' == 'GoomeMod')">
+    <PackageReference Include="UnityEngine.Modules" Version="$(UnityVersion)" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UsesUnity)' == 'true' and '$(GameDlls)' != '' and '$(MSBuildProjectName)' != 'GoomeMod'">
+    <Reference Include="$(GameDlls)/UnityEngine*.dll" Private="false" />
+    <Reference Include="$(GameDlls)/Il2Cpp*.dll" Private="false" Condition="'$(TargetFramework)' == 'net6.0'" />
+  </ItemGroup>
+
+</Project>

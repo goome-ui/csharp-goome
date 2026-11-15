@@ -1,0 +1,69 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  upload:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkg
+          path: out/
+      - uses: actions/download-artifact@v4
+        with:
+          name: mod-templates
+          path: mods-out/
+      - name: unity package and mod zips
+        run: |
+          v=${TAG#v}
+          grep -q "\"version\": \"$v\"" unity/com.goome-ui.goome/package.json || { echo "the unity package isnt $v"; exit 1; }
+          test -s "out/GoomeSharp.$v.nupkg" || { echo "no GoomeSharp.$v.nupkg"; ls out; exit 1; }
+          tar -czf "out/com.goome-ui.goome-$v.tgz" -C unity --transform 's,^com.goome-ui.goome,package,' com.goome-ui.goome
+          zipdist() { (cd "mods-out/$1/dist" && zip -qr "$GITHUB_WORKSPACE/out/$2-$v.zip" .); }
+          zipdist BepInEx5/bin/Release/netstandard2.0 goome-menu-bepinex5
+          zipdist BepInEx6/bin/Release/netstandard2.0 goome-menu-bepinex6-mono
+          zipdist MelonLoader/bin/Release/net472 goome-menu-melonloader-mono
+          ls -l out
+      - name: upload
+        run: |
+          gh release view "$TAG" > /dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "goome ${TAG#v}" --notes "goome ${TAG#v}"
+          gh release upload "$TAG" out/*.nupkg out/*.tgz out/*.zip --clobber
+
+  nuget:
+    needs: upload
+    runs-on: ubuntu-latest
+    environment:
+      name: nuget
+      url: https://www.nuget.org/packages/GoomeSharp
+    permissions:
+      id-token: write
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkg
+          path: out/
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: NuGet/login@v1
+        id: login
+        with:
+          user: sevvy_wevvy
+      - name: push to nuget.org
+        run: dotnet nuget push "out/GoomeSharp.${TAG#v}.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

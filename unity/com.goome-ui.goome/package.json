@@ -1,0 +1,33 @@
+{
+  "name": "com.goome-ui.goome",
+  "version": "0.4.0",
+  "displayName": "goome",
+  "description": "goome's immediate mode ui inside your game, drawn offscreen into a texture, plus real see-through desktop overlays from a standalone build.",
+  "unity": "2021.3",
+  "license": "GPL-3.0-only",
+  "documentationUrl": "https://github.com/goome-ui/csharp-goome/tree/main/unity/com.goome-ui.goome",
+  "changelogUrl": "https://github.com/goome-ui/csharp-goome/releases",
+  "licensesUrl": "https://github.com/goome-ui/csharp-goome/blob/main/LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/goome-ui/csharp-goome.git",
+    "directory": "unity/com.goome-ui.goome"
+  },
+  "author": {
+    "name": "sevvy-wevvy",
+    "url": "https://github.com/goome-ui"
+  },
+  "keywords": ["ui", "immediate-mode", "overlay", "goome"],
+  "samples": [
+    {
+      "displayName": "In Game UI",
+      "description": "a goome window on a RawImage that takes clicks and lets the rest fall through to the game",
+      "path": "Samples~/InGameUI"
+    },
+    {
+      "displayName": "Desktop Overlay",
+      "description": "a real see-through overlay on top of the whole desktop, from a standalone build",
+      "path": "Samples~/DesktopOverlay"
+    }
+  ]
+}

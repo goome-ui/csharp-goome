@@ -1,0 +1,19 @@
+img_0.bin 9 3 0x01975ad8 png gray 1 bit
+img_1.bin 6 6 0xaf77e7e2 png palette 4 bit trns interlaced
+img_2.bin 5 4 0xdd60c23e png rgb 16 bit
+img_3.bin 5 5 0x52d68985 png gray alpha stored interlaced
+img_4.bin 8 6 0x66db9dcd png rgba fixed huffman split
+img_5.bin 7 4 0x843ed605 png gray key
+img_6.bin 9 9 0xdc2f91d5 png rgba 16 bit interlaced
+img_7.bin 16 16 0x32e2c9ce jpeg 420
+img_8.bin 13 9 0x0e230baf jpeg 422 restarts
+img_9.bin 10 10 0x34fc5275 jpeg 444
+img_10.bin 14 11 0x5bcee932 jpeg progressive 420 restarts
+img_11.bin 9 7 0xf010b3c8 jpeg gray
+img_12.bin 6 10 0x65909e25 jpeg exif rotated
+img_13.bin 5 3 0x9256d097 bmp 4 bit
+img_14.bin 3 2 0x6bdb3a29 bmp 32 bit alpha top down
+img_15.bin 5 3 0x09d94c56 bmp 24 bit
+img_16.bin 3 2 0xc6fdf725 ppm
+img_17.bin 3 1 0x35029201 pgm 16 bit
+img_18.bin 6 4 0x23af45ad qoi

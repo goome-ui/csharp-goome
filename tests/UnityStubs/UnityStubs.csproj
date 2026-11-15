@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>GoomeUI.Runtime</AssemblyName>
+    <DefineConstants Condition="'$(InputSystem)' == 'true'">$(DefineConstants);ENABLE_INPUT_SYSTEM;GOOME_INPUT_SYSTEM</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Stubs.cs" />
+    <Compile Include="../../unity/com.goome-ui.goome/Runtime/**/*.cs" />
+    <Compile Include="../../unity/com.goome-ui.goome/Samples~/**/*.cs" />
+  </ItemGroup>
+
+</Project>

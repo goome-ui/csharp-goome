@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
+    <AssemblyName>GoomeMenu</AssemblyName>
+    <RootNamespace>GoomeMenu</RootNamespace>
+    <Version>0.1.0</Version>
+    <ModLayout>bepinex</ModLayout>
+    <BepInExVersion>6.0.0-be.793</BepInExVersion>
+    <NoWarn>$(NoWarn);NU1603</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <UsesUnity>true</UsesUnity>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <DefineConstants>$(DefineConstants);IL2CPP</DefineConstants>
+    <UsesUnity Condition="'$(GameDlls)' != ''">true</UsesUnity>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../GoomeMod/GoomeMod.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="BepInEx.Unity.Mono" Version="$(BepInExVersion)" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="UnityEngine" Version="5.6.1" ExcludeAssets="all" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="$(BepInExVersion)" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="Il2CppInterop.Runtime" Version="1.5.3" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="Il2CppInterop.ReferenceLibs" Version="1.0.0" PrivateAssets="all" ExcludeAssets="runtime" Condition="'$(GameDlls)' == ''" />
+  </ItemGroup>
+
+</Project>
