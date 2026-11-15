@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>GoomeMenu</AssemblyName>
+    <RootNamespace>GoomeMenu</RootNamespace>
+    <Version>0.1.0</Version>
+    <UsesUnity>true</UsesUnity>
+    <ModLayout>bepinex</ModLayout>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" PrivateAssets="all" ExcludeAssets="runtime" />
+    <ProjectReference Include="../../GoomeMod/GoomeMod.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0</TargetFrameworks>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsAotCompatible Condition="'$(TargetFramework)' == 'net8.0'">true</IsAotCompatible>
+    <RootNamespace>GoomeSharp</RootNamespace>
+    <AssemblyName>GoomeSharp</AssemblyName>
+    <Version>0.3.0</Version>
+    <PackageId>GoomeSharp</PackageId>
+    <Authors>sevvy-wevvy</Authors>
+    <Description>C# bindings for goome: see-through always on top overlays, normal app windows and offscreen ui for game engines like Unity, with drawing, fonts, images, screen grabs, hotkeys and an immediate mode ui kit.</Description>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/goome-ui/csharp-goome</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/goome-ui/csharp-goome</RepositoryUrl>
+    <PackageTags>overlay;ui;immediate-mode;gui;unity;screen-capture;hotkeys;goome</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoWarn>$(NoWarn);CA2255</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Memory" Version="4.5.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../runtimes/**/*.so;../../runtimes/**/*.dll;../../runtimes/**/*.dylib" Pack="true" PackagePath="runtimes/" CopyToOutputDirectory="PreserveNewest" Link="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>
