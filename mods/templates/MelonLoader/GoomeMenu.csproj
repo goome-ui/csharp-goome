@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net472;net6.0</TargetFrameworks>
+    <AssemblyName>GoomeMenu</AssemblyName>
+    <RootNamespace>GoomeMenu</RootNamespace>
+    <Version>0.1.0</Version>
+    <ModLayout>melon</ModLayout>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
+    <UsesUnity>true</UsesUnity>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <DefineConstants>$(DefineConstants);IL2CPP</DefineConstants>
+    <UsesUnity Condition="'$(GameDlls)' != ''">true</UsesUnity>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LavaGang.MelonLoader" Version="0.7.2" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="HarmonyX" Version="2.10.2" PrivateAssets="all" ExcludeAssets="runtime" />
+    <ProjectReference Include="../../GoomeMod/GoomeMod.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="Il2CppInterop.Runtime" Version="1.5.3" PrivateAssets="all" ExcludeAssets="runtime" />
+    <PackageReference Include="Il2CppInterop.ReferenceLibs" Version="1.0.0" PrivateAssets="all" ExcludeAssets="runtime" Condition="'$(GameDlls)' == ''" />
+  </ItemGroup>
+
+</Project>

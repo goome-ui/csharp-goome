@@ -1,0 +1,32 @@
+<Project>
+
+  <PropertyGroup Condition="'$(ModLayout)' != ''">
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <GoomePlugins>$(MSBuildThisFileDirectory)../unity/com.goome-ui.goome/Runtime/Plugins/</GoomePlugins>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(ModLayout)' != ''">
+    <GoomeNative Include="$(GoomePlugins)x86_64/goome.dll;$(GoomePlugins)x86_64/libgoome.so;$(GoomePlugins)macOS/libgoome.dylib" />
+  </ItemGroup>
+
+  <Target Name="GoomeDist" AfterTargets="Build" Condition="'$(ModLayout)' != '' and '$(TargetFramework)' != ''">
+    <PropertyGroup>
+      <GoomeDistDir>$(OutDir)dist/</GoomeDistDir>
+      <GoomeModDir Condition="'$(ModLayout)' == 'bepinex'">$(GoomeDistDir)BepInEx/plugins/$(AssemblyName)/</GoomeModDir>
+      <GoomeLibDir Condition="'$(ModLayout)' == 'bepinex'">$(GoomeModDir)</GoomeLibDir>
+      <GoomeModDir Condition="'$(ModLayout)' == 'melon'">$(GoomeDistDir)Mods/</GoomeModDir>
+      <GoomeLibDir Condition="'$(ModLayout)' == 'melon'">$(GoomeDistDir)UserLibs/</GoomeLibDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <_GoomeLib Include="$(OutDir)GoomeMod.dll;$(OutDir)GoomeSharp.dll;$(OutDir)System.Memory.dll;$(OutDir)System.Buffers.dll;$(OutDir)System.Runtime.CompilerServices.Unsafe.dll;$(OutDir)System.Numerics.Vectors.dll" />
+      <_GoomeLibFound Include="@(_GoomeLib)" Condition="Exists('%(FullPath)')" />
+    </ItemGroup>
+    <Error Condition="'@(GoomeNative)' == '' or !Exists('$(GoomePlugins)x86_64/libgoome.so')" Text="no native goome libs in $(GoomePlugins)" />
+    <RemoveDir Directories="$(GoomeDistDir)" />
+    <Copy SourceFiles="$(OutDir)$(TargetFileName)" DestinationFolder="$(GoomeModDir)" />
+    <Copy SourceFiles="@(_GoomeLibFound);@(GoomeNative)" DestinationFolder="$(GoomeLibDir)" />
+    <Copy SourceFiles="@(GoomeNative)" DestinationFolder="$(OutDir)" />
+    <Message Importance="high" Text="$(AssemblyName) $(TargetFramework) -> $(GoomeDistDir)" />
+  </Target>
+
+</Project>

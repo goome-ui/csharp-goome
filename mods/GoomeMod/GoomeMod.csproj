@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <AssemblyName>GoomeMod</AssemblyName>
+    <RootNamespace>GoomeUI.ModKit</RootNamespace>
+    <UsesUnity>true</UsesUnity>
+    <Version>0.4.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/GoomeSharp/GoomeSharp.csproj" />
+    <PackageReference Include="HarmonyX" Version="2.7.0" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+</Project>
