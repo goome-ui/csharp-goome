@@ -36,7 +36,7 @@ jobs:
         env:
           GOOME_BACKEND: test
         run: |
-          mkdir -p ci-out/hello ci-out/ui ci-out/app ci-out/custom ci-out/skinned ci-out/anything
+          mkdir -p ci-out/hello ci-out/ui ci-out/app ci-out/custom ci-out/skinned ci-out/anything ci-out/anim
           GOOME_TEST_SHOTS=ci-out/hello GOOME_TEST_SCRIPT="screen 640x360 1; 2 click 120,110; 3 click 150,190; 4 key hi; 5 hotkey alt+h; 6 hotkey alt+h; end 8" \
             dotnet run --project examples/Hello -c Release
           GOOME_TEST_SHOTS=ci-out/ui GOOME_TEST_SCRIPT="screen 1280x720 1; 3 click 100,150; 6 click 200,90; end 10" \
@@ -47,9 +47,13 @@ jobs:
           GOOME_TEST_SHOTS=ci-out/custom GOOME_TEST_SCRIPT="screen 1120x800 1; 3 click 600,293; 5 hover 860,520; 6 hold 1000,600 9; end 12" dotnet run --project examples/Custom -c Release
           GOOME_TEST_SHOTS=ci-out/skinned GOOME_TEST_SCRIPT="screen 980x680 1; 3 click 120,150; 5 hover 400,330; 6 click 190,350; 8 hover 700,120; end 14" dotnet run --project examples/Skinned -c Release
           GOOME_TEST_SHOTS=ci-out/anything GOOME_TEST_SCRIPT="screen 1320x940 1; 2 click 1095,223; 4 click 1095,370; 6 click 1150,280; 7 click 995,413; 8 key a42; 9 hover 760,420; end 13" dotnet run --project examples/Anything -c Release
+          GOOME_TEST_SHOTS=ci-out/anim GOOME_TEST_SCRIPT="screen 880x760 1; 3 click 70,90; 5 hover 300,560; 12 click 120,560; 18 click 640,640; end 26" dotnet run --project examples/Anim -c Release
+          env -u GOOME_BACKEND dotnet run --project examples/Text -c Release -- ci-out/text.ppm
           ls ci-out/hello | head -3
           test -s ci-out/grab.ppm
           test -s ci-out/offscreen.ppm
+          test -s ci-out/text.ppm
+          test "$(ls ci-out/anim | wc -l)" -gt 20
           test "$(ls ci-out/app | wc -l)" -gt 3
           test "$(ls ci-out/custom | wc -l)" -gt 3
           test "$(ls ci-out/skinned | wc -l)" -gt 3
@@ -87,8 +91,8 @@ jobs:
           GOOME_BACKEND: test
         run: |
           v=$(cat native/VERSION)
-          mkdir -p build/c ci-out/c/hello ci-out/c/ui ci-out/c/custom ci-out/c/skinned ci-out/c/anything
-          for e in hello ui custom skinned anything; do
+          mkdir -p build/c ci-out/c/hello ci-out/c/ui ci-out/c/custom ci-out/c/skinned ci-out/c/anything ci-out/c/anim
+          for e in hello ui custom skinned anything anim text; do
             if ! curl -fsSL "https://raw.githubusercontent.com/goome-ui/c-goome/$v/examples/$e.c" -o build/c/$e.c; then
               echo "cant get c-goome $v from github, skipping the c compare"
               exit 0
@@ -102,7 +106,11 @@ jobs:
           GOOME_TEST_SHOTS=ci-out/c/custom GOOME_TEST_SCRIPT="screen 1120x800 1; 3 click 600,293; 5 hover 860,520; 6 hold 1000,600 9; end 12" build/c/custom > /dev/null
           GOOME_TEST_SHOTS=ci-out/c/skinned GOOME_TEST_SCRIPT="screen 980x680 1; 3 click 120,150; 5 hover 400,330; 6 click 190,350; 8 hover 700,120; end 14" build/c/skinned > /dev/null
           GOOME_TEST_SHOTS=ci-out/c/anything GOOME_TEST_SCRIPT="screen 1320x940 1; 2 click 1095,223; 4 click 1095,370; 6 click 1150,280; 7 click 995,413; 8 key a42; 9 hover 760,420; end 13" build/c/anything > /dev/null
-          for e in hello ui custom skinned anything; do
+          GOOME_TEST_SHOTS=ci-out/c/anim GOOME_TEST_SCRIPT="screen 880x760 1; 3 click 70,90; 5 hover 300,560; 12 click 120,560; 18 click 640,640; end 26" build/c/anim > /dev/null
+          env -u GOOME_BACKEND build/c/text ci-out/c/text.ppm
+          cmp ci-out/c/text.ppm ci-out/text.ppm || { echo "text: the frame differs from the c one"; exit 1; }
+          echo "text: same frame as the c example"
+          for e in hello ui custom skinned anything anim; do
             n=$(ls ci-out/c/$e | wc -l)
             [ "$n" -gt 0 ] && [ "$n" = "$(ls ci-out/$e | wc -l)" ] || { echo "$e: different frame count"; exit 1; }
             for f in ci-out/c/$e/*; do cmp "$f" "ci-out/$e/$(basename "$f")" || { echo "$e: $(basename "$f") differs from the c one"; exit 1; }; done
