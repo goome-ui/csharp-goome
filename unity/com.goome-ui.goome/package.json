@@ -1,6 +1,6 @@
 {
   "name": "com.goome-ui.goome",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "displayName": "goome",
   "description": "goome's immediate mode ui inside your game, drawn offscreen into a texture, plus real see-through desktop overlays from a standalone build.",
   "unity": "2021.3",

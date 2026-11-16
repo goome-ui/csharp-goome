@@ -8,7 +8,7 @@
     <IsAotCompatible Condition="'$(TargetFramework)' == 'net8.0'">true</IsAotCompatible>
     <RootNamespace>GoomeSharp</RootNamespace>
     <AssemblyName>GoomeSharp</AssemblyName>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <PackageId>GoomeSharp</PackageId>
     <Authors>sevvy-wevvy</Authors>
     <Description>C# bindings for goome: see-through always on top overlays, normal app windows and offscreen ui for game engines like Unity, with drawing, fonts, images, screen grabs, hotkeys and an immediate mode ui kit.</Description>
