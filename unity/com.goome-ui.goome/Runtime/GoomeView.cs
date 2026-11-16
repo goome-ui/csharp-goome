@@ -25,6 +25,8 @@ namespace GoomeUI
         public bool takeKeyboard = true;
         public bool syncClipboard = true;
         public bool lightTheme;
+        [Tooltip("Builds the screen reader tree every frame, GetAccessibilityTree() hands it to your a11y bridge. Also lets the IME window sit right under the focused input")]
+        public bool accessibility = true;
 #if ENABLE_INPUT_SYSTEM && GOOME_INPUT_SYSTEM
         [Tooltip("While goome wants the mouse or keyboard, turn off every InputAction bound to it and turn them back on after")]
         public bool blockGameInput = true;
@@ -42,6 +44,8 @@ namespace GoomeUI
         public bool PointerInside { get; private set; }
         public bool WantsMouse { get; private set; }
         public bool WantsKeyboard { get; private set; }
+        public bool WantsText { get; private set; }
+        public string Composition => preedit;
 
         public static bool AnyWantsMouse
         {
@@ -77,6 +81,10 @@ namespace GoomeUI
         float gx, gy;
         bool dirty = true, captured, checkClip, pressedOnUi;
         string clip = "";
+        string preedit = "";
+        bool imeOn;
+        GoomeSharp.Rect imeAt;
+        A11yNode[] tree = Array.Empty<A11yNode>();
         readonly float[] heldFor = new float[GoomeInput.Codes.Length];
 
         void OnEnable()
@@ -99,6 +107,7 @@ namespace GoomeUI
                 return;
             }
             if (lightTheme) Ui.Theme.Light();
+            Ui.A11y(accessibility);
             if (shader == null) shader = Shader.Find("GoomeUI/Premultiplied");
             mat = new Material(shader);
             if (image != null)
@@ -120,8 +129,12 @@ namespace GoomeUI
         void OnDisable()
         {
             live.Remove(this);
-            WantsMouse = WantsKeyboard = false;
+            WantsMouse = WantsKeyboard = WantsText = false;
             Block();
+            if (imeOn) GoomeInput.Ime(false, Vector2.zero, false);
+            imeOn = false;
+            preedit = "";
+            tree = Array.Empty<A11yNode>();
             Ui?.Dispose();
             Goome?.Dispose();
             Ui = null;
@@ -150,6 +163,28 @@ namespace GoomeUI
 
         public bool Push(in Event ev) => Goome != null && Goome.Push(ev);
 
+        public IReadOnlyList<A11yNode> GetAccessibilityTree() => tree;
+
+        public bool A11yPerform(A11yAction action, uint id, string text = null) => Ui != null && Ui.A11yPerform(action, id, text);
+
+        public bool TryGetScreenRect(A11yNode node, out UnityEngine.Rect screen)
+        {
+            screen = default;
+            if (node == null || image == null) return false;
+            var cam = EventCamera();
+            var a = ToScreen(node.X, node.Y, cam);
+            var b = ToScreen(node.X + node.Width, node.Y + node.Height, cam);
+            screen = new UnityEngine.Rect(Math.Min(a.x, b.x), Math.Min(a.y, b.y), Math.Abs(b.x - a.x), Math.Abs(b.y - a.y));
+            return true;
+        }
+
+        Vector2 ToScreen(double x, double y, Camera cam)
+        {
+            var r = image.rectTransform.rect;
+            var local = new Vector2(r.xMin + (float)x * r.width / w, r.yMax - (float)y * r.height / h);
+            return RectTransformUtility.WorldToScreenPoint(cam, image.rectTransform.TransformPoint(local));
+        }
+
         public bool IsRaycastLocationValid(Vector2 screen, Camera cam) => Goome != null && ToUi(screen, cam, out float x, out float y) && Goome.Hit(x, y);
 
         void Update()
@@ -176,6 +211,7 @@ namespace GoomeUI
             WantsMouse = (wants & Want.Mouse) != 0 && (buttons != 0 ? pressedOnUi : PointerInside);
             WantsKeyboard = takeKeyboard && (wants & Want.Keyboard) != 0;
             Block();
+            Ime();
             Sync();
         }
 
@@ -192,6 +228,7 @@ namespace GoomeUI
                 Debug.LogException(e);
             }
             Ui.End();
+            tree = accessibility ? Ui.AccessibilityTree() : Array.Empty<A11yNode>();
             if (!Goome.TryFrame(out var f)) return;
             bool fresh = tex == null || tex.width != f.Width || tex.height != f.Height;
             if (fresh)
@@ -298,11 +335,23 @@ namespace GoomeUI
         void PumpKeys(Mods mods)
         {
             bool combo = (mods & (Mods.Ctrl | Mods.Alt | Mods.Super)) != 0;
+            string comp = GoomeInput.Composition();
+            bool composing = preedit.Length > 0 || comp.Length > 0;
+            if (comp != preedit)
+            {
+                preedit = comp;
+                Goome.PushPreedit(comp);
+            }
             for (int i = 0; i < GoomeInput.Codes.Length; i++)
             {
                 if (!GoomeInput.Held(i))
                 {
                     heldFor[i] = 0;
+                    continue;
+                }
+                if (composing)
+                {
+                    heldFor[i] = float.NegativeInfinity;
                     continue;
                 }
                 if (i >= GoomeInput.FirstShortcut && !combo) continue;
@@ -320,12 +369,52 @@ namespace GoomeUI
             }
             string text = GoomeInput.TakeText();
             if (combo) return;
+            if (composing)
+            {
+                var keep = new System.Text.StringBuilder(text.Length);
+                foreach (char c in text)
+                    if (c >= 32 && c != 127) keep.Append(c);
+                if (keep.Length > 0) Goome.PushCommit(keep.ToString());
+                return;
+            }
             for (int i = 0; i < text.Length; i++)
             {
                 char c = text[i];
                 if (c < 32 || c == 127) continue;
                 int cp = char.IsSurrogatePair(text, i) ? char.ConvertToUtf32(c, text[++i]) : c;
                 Goome.Push(Event.Char(cp, mods & Mods.Shift));
+            }
+        }
+
+        void Ime()
+        {
+            A11yNode at = null;
+            bool want = WantsKeyboard && appFocused;
+            if (want && accessibility)
+            {
+                want = false;
+                foreach (var n in tree)
+                    if (n.Focused && n.Role == Role.Input)
+                    {
+                        at = n;
+                        want = true;
+                        break;
+                    }
+            }
+            WantsText = want;
+            var rect = at != null ? new GoomeSharp.Rect((int)at.X, (int)at.Y, 1, Math.Max(1, (int)at.Height)) : default;
+            if (want == imeOn && rect.Equals(imeAt)) return;
+            imeOn = want;
+            imeAt = rect;
+            Goome.TextInput(want, at != null ? rect : (GoomeSharp.Rect?)null);
+            var sr = default(UnityEngine.Rect);
+            bool placed = at != null && TryGetScreenRect(at, out sr);
+            Vector2 caret = placed ? new Vector2(sr.xMin, Screen.height - sr.yMin) : Vector2.zero;
+            GoomeInput.Ime(want, caret, placed);
+            if (!want && preedit.Length > 0)
+            {
+                preedit = "";
+                Goome.PushPreedit("");
             }
         }
 

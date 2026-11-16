@@ -3,6 +3,7 @@ using GoomeSharp;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM && GOOME_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 #endif
 
 namespace GoomeUI
@@ -33,8 +34,41 @@ namespace GoomeUI
         };
 
         static Keyboard hooked;
+        static string composing = "";
 
         static void OnText(char c) => typed.Append(c);
+
+        static void OnComposition(IMECompositionString s) => composing = s.ToString();
+
+        static void Hook()
+        {
+            var k = Keyboard.current;
+            if (k == hooked) return;
+            if (hooked != null)
+            {
+                hooked.onTextInput -= OnText;
+                hooked.onIMECompositionChange -= OnComposition;
+            }
+            hooked = k;
+            composing = "";
+            if (k == null) return;
+            k.onTextInput += OnText;
+            k.onIMECompositionChange += OnComposition;
+        }
+
+        internal static string Composition()
+        {
+            Hook();
+            return composing;
+        }
+
+        internal static void Ime(bool on, Vector2 caret, bool hasCaret)
+        {
+            var k = Keyboard.current;
+            if (k == null) return;
+            k.SetIMEEnabled(on);
+            if (on && hasCaret) k.SetIMECursorPosition(caret);
+        }
 
         internal static bool Pointer(out Vector2 pos)
         {
@@ -76,13 +110,7 @@ namespace GoomeUI
 
         internal static string TakeText()
         {
-            var k = Keyboard.current;
-            if (k != hooked)
-            {
-                if (hooked != null) hooked.onTextInput -= OnText;
-                hooked = k;
-                if (k != null) k.onTextInput += OnText;
-            }
+            Hook();
             return Drain();
         }
 #else
@@ -121,6 +149,14 @@ namespace GoomeUI
         {
             typed.Append(Input.inputString);
             return Drain();
+        }
+
+        internal static string Composition() => Input.compositionString ?? "";
+
+        internal static void Ime(bool on, Vector2 caret, bool hasCaret)
+        {
+            Input.imeCompositionMode = on ? IMECompositionMode.On : IMECompositionMode.Auto;
+            if (on && hasCaret) Input.compositionCursorPos = caret;
         }
 #endif
 
