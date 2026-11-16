@@ -31,6 +31,7 @@ namespace UnityEngine
     {
         public Quaternion localRotation;
         public void Rotate(float x, float y, float z) { }
+        public Vector3 TransformPoint(Vector3 p) => p;
     }
 
     public class RectTransform : Transform
@@ -69,6 +70,7 @@ namespace UnityEngine
         public float x, y, width, height;
         public Rect(float x, float y, float w, float h) => (this.x, this.y, width, height) = (x, y, w, h);
         public float xMin => x;
+        public float yMin => y;
         public float yMax => y + height;
     }
 
@@ -154,6 +156,13 @@ namespace UnityEngine
             localPoint = default;
             return false;
         }
+
+        public static Vector2 WorldToScreenPoint(Camera cam, Vector3 worldPoint) => worldPoint;
+    }
+
+    public static class Screen
+    {
+        public static int width, height;
     }
 
     public interface ICanvasRaycastFilter
@@ -214,11 +223,16 @@ namespace UnityEngine
         public static bool mousePresent;
         public static Vector2 mouseScrollDelta;
         public static string inputString = "";
+        public static string compositionString = "";
+        public static IMECompositionMode imeCompositionMode;
+        public static Vector2 compositionCursorPos;
         public static bool GetMouseButton(int b) => false;
         public static float GetAxis(string name) => 0;
         public static bool GetMouseButtonDown(int b) => false;
         public static bool GetKey(KeyCode k) => false;
     }
+
+    public enum IMECompositionMode { Auto, On, Off }
 
     public class Light : Behaviour
     {
@@ -301,6 +315,9 @@ namespace UnityEngine.InputSystem
         public KeyControl shiftKey = null!, ctrlKey = null!, altKey = null!, leftMetaKey = null!, rightMetaKey = null!;
         public KeyControl this[Key k] => null!;
         public event Action<char> onTextInput;
+        public event Action<LowLevel.IMECompositionString> onIMECompositionChange;
+        public void SetIMEEnabled(bool enabled) { }
+        public void SetIMECursorPosition(Vector2 position) { }
     }
 
     public class InputAction
@@ -314,6 +331,19 @@ namespace UnityEngine.InputSystem
     public static class InputSystem
     {
         public static int ListEnabledActions(List<InputAction> actions) => 0;
+    }
+}
+
+namespace UnityEngine.InputSystem.LowLevel
+{
+    public struct IMECompositionString : IEnumerable<char>
+    {
+        readonly string s;
+        public IMECompositionString(string characters) => s = characters;
+        public int Count => s?.Length ?? 0;
+        public override string ToString() => s ?? "";
+        public IEnumerator<char> GetEnumerator() => (s ?? "").GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
 

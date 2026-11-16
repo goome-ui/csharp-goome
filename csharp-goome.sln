@@ -23,6 +23,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Skinned", "examples\Skinned
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Anything", "examples\Anything\Anything.csproj", "{7A2C4E96-3B5D-5F18-C9E4-1D6A8B3F5C72}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Anim", "examples\Anim\Anim.csproj", "{5D8A3C27-9E4B-5F61-A2D7-3B8C6E1F4A05}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Text", "examples\Text\Text.csproj", "{8B1E6F42-2C7A-5D93-B4E8-6A3D9C5F7E21}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,5 +73,13 @@ Global
 		{7A2C4E96-3B5D-5F18-C9E4-1D6A8B3F5C72}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A2C4E96-3B5D-5F18-C9E4-1D6A8B3F5C72}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A2C4E96-3B5D-5F18-C9E4-1D6A8B3F5C72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D8A3C27-9E4B-5F61-A2D7-3B8C6E1F4A05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D8A3C27-9E4B-5F61-A2D7-3B8C6E1F4A05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D8A3C27-9E4B-5F61-A2D7-3B8C6E1F4A05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D8A3C27-9E4B-5F61-A2D7-3B8C6E1F4A05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B1E6F42-2C7A-5D93-B4E8-6A3D9C5F7E21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B1E6F42-2C7A-5D93-B4E8-6A3D9C5F7E21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B1E6F42-2C7A-5D93-B4E8-6A3D9C5F7E21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B1E6F42-2C7A-5D93-B4E8-6A3D9C5F7E21}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

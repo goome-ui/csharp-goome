@@ -149,6 +149,8 @@ namespace GoomeSharp
         Close,
         Focus,
         Drop,
+        Text,
+        Preedit,
     }
 
     [Flags]
@@ -287,6 +289,64 @@ namespace GoomeSharp
         InOut,
         Back,
         Custom,
+        In,
+        Spring,
+        Bounce,
+    }
+
+    public static class Easing
+    {
+        public static double At(this Ease ease, double t) => Native.Ease((int)ease, t);
+    }
+
+    public enum TextDirection
+    {
+        Auto,
+        Ltr,
+        Rtl,
+    }
+
+    public enum Role
+    {
+        None,
+        Window,
+        Button,
+        Checkbox,
+        Radio,
+        Slider,
+        Text,
+        Input,
+        Combo,
+        List,
+        Item,
+        Tab,
+        Menu,
+        MenuItem,
+        Table,
+        Tree,
+        Progress,
+        Image,
+        Group,
+        Dialog,
+    }
+
+    [Flags]
+    public enum A11yState
+    {
+        None = 0,
+        Focused = 1,
+        Checked = 2,
+        Disabled = 4,
+        Expanded = 8,
+        Selected = 16,
+    }
+
+    public enum A11yAction
+    {
+        Press,
+        Set,
+        Expand,
+        Focus,
     }
 
     public enum Preset
@@ -561,6 +621,64 @@ namespace GoomeSharp
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct RawA11yNode
+    {
+        public int Role, Parent, States;
+        public double X, Y, W, H;
+        public fixed byte Label[96];
+        public fixed byte Value[64];
+        public uint Id;
+        public double Num, Min, Max;
+        public int Caret;
+    }
+
+    public sealed class A11yNode
+    {
+        public int Index { get; }
+        public Role Role { get; }
+        public int Parent { get; }
+        public A11yState States { get; }
+        public double X { get; }
+        public double Y { get; }
+        public double Width { get; }
+        public double Height { get; }
+        public string Label { get; }
+        public string Value { get; }
+        public uint Id { get; }
+        public double Number { get; }
+        public double Min { get; }
+        public double Max { get; }
+        public int Caret { get; }
+
+        internal unsafe A11yNode(int index, RawA11yNode* n)
+        {
+            Index = index;
+            Role = (Role)n->Role;
+            Parent = n->Parent;
+            States = (A11yState)n->States;
+            X = n->X;
+            Y = n->Y;
+            Width = n->W;
+            Height = n->H;
+            Label = Native.Str(n->Label) ?? "";
+            Value = Native.Str(n->Value) ?? "";
+            Id = n->Id;
+            Number = n->Num;
+            Min = n->Min;
+            Max = n->Max;
+            Caret = n->Caret;
+        }
+
+        public bool Focused => (States & A11yState.Focused) != 0;
+        public bool Checked => (States & A11yState.Checked) != 0;
+        public bool Disabled => (States & A11yState.Disabled) != 0;
+        public bool Expanded => (States & A11yState.Expanded) != 0;
+        public bool Selected => (States & A11yState.Selected) != 0;
+
+        public override string ToString() => $"{Role} '{Label}'{(Value.Length > 0 ? $" = '{Value}'" : "")} {States}";
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct RawBitmap
     {
         public uint* Px;
@@ -683,22 +801,29 @@ namespace GoomeSharp
     public struct Event
     {
         internal RawEvent raw;
+        internal string? full;
 
         public Event(EventType type)
         {
             raw = default;
+            full = null;
             raw.Type = (int)type;
         }
 
         public Event(EventType type, double x, double y)
         {
             raw = default;
+            full = null;
             raw.Type = (int)type;
             raw.X = x;
             raw.Y = y;
         }
 
-        public Event(in RawEvent r) => raw = r;
+        public Event(in RawEvent r)
+        {
+            raw = r;
+            full = null;
+        }
 
         public RawEvent Raw => raw;
         public EventType Type => (EventType)raw.Type;
@@ -724,9 +849,14 @@ namespace GoomeSharp
         {
             get
             {
+                if (full != null) return full;
                 fixed (byte* p = raw.Msg) return p[0] == 0 ? "" : Native.Str(p) ?? "";
             }
         }
+
+        public bool IsText => Type == EventType.Text;
+        public bool IsPreedit => Type == EventType.Preedit;
+        public int Caret => Type == EventType.Preedit ? Utf8.CharIndex(Message, raw.Id) : 0;
 
         public static Event Down(double x, double y, int button = 1, Mods mods = Mods.None) => Mouse(EventType.Down, x, y, button, mods);
         public static Event Up(double x, double y, int button = 1, Mods mods = Mods.None) => Mouse(EventType.Up, x, y, button, mods);
@@ -777,6 +907,34 @@ namespace GoomeSharp
             return e;
         }
 
+        public static Event Commit(string text)
+        {
+            var e = new Event(EventType.Text);
+            e.SetMessage(text);
+            return e;
+        }
+
+        public static Event Preedit(string text, int caret = -1)
+        {
+            var e = new Event(EventType.Preedit);
+            e.SetMessage(text);
+            string kept = e.Message;
+            e.raw.Id = Utf8.ByteIndex(kept, caret < 0 ? kept.Length : Math.Min(caret, kept.Length));
+            return e;
+        }
+
+        public static Event A11y(A11yAction action, uint id, string? text = null)
+        {
+            string verb = action switch
+            {
+                A11yAction.Set => "set",
+                A11yAction.Expand => "expand",
+                A11yAction.Focus => "focus",
+                _ => "press",
+            };
+            return Control(text == null ? $"a11y {verb} {id}" : $"a11y {verb} {id} {text}");
+        }
+
         static Event Mouse(EventType t, double x, double y, int button, Mods mods)
         {
             var e = new Event(t, x, y);
@@ -811,12 +969,41 @@ namespace GoomeSharp
             EventType.Control => $"Control '{Message}'",
             EventType.Focus => Focused ? "Focus gained" : "Focus lost",
             EventType.Drop => $"Drop {X:0},{Y:0} '{Message}'",
+            EventType.Text => $"Text '{Message}'",
+            EventType.Preedit => $"Preedit '{Message}' caret {Caret}",
             _ => Type.ToString(),
         };
     }
 
     internal static class Utf8
     {
+        internal static int CharIndex(string s, int bytes)
+        {
+            int n = 0, i = 0;
+            while (i < s.Length && n < bytes)
+            {
+                bool pair = char.IsSurrogatePair(s, i);
+                n += pair ? 4 : s[i] < 0x80 ? 1 : s[i] < 0x800 ? 2 : 3;
+                i += pair ? 2 : 1;
+            }
+            return i;
+        }
+
+        internal static int ByteIndex(string s, int chars)
+        {
+            int n = 0;
+            for (int i = 0; i < chars && i < s.Length; i++)
+            {
+                if (char.IsSurrogatePair(s, i))
+                {
+                    n += 4;
+                    i++;
+                }
+                else n += s[i] < 0x80 ? 1 : s[i] < 0x800 ? 2 : 3;
+            }
+            return n;
+        }
+
         internal static int Fit(string s, Span<byte> dst)
         {
             var all = U8.C(s)!;

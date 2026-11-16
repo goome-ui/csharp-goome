@@ -43,6 +43,7 @@ static class Program
             ("offscreen", Offscreen), ("frame", FrameHash), ("events", Events), ("window", WindowMode), ("app", AppMode), ("kit", KitTest), ("widgets2", Widgets2), ("skins", Skins), ("popups", Popups), ("grab", GrabTest),
             ("style", StyleTest), ("pos", PosTest), ("custom", CustomTest), ("store", StoreTest), ("frame copy", FrameCopyTest), ("icons", IconsTest),
             ("looks", LooksTest), ("inputs", InputsTest), ("keymap", KeymapTest), ("config", ConfigTest),
+            ("anims", AnimsTest), ("emoji rtl", EmojiRtlTest), ("ime", ImeTest), ("a11y", A11yTest),
         };
         foreach (var (name, run) in tests)
         {
@@ -61,6 +62,487 @@ static class Program
         }
         Console.WriteLine(fails > 0 ? $"{fails} failed out of {checks}" : $"all good, {checks} checks");
         return fails > 0 ? 1 : 0;
+    }
+
+    sealed class AnimKit
+    {
+        public Goome G = null!;
+        public Ui U = null!;
+        public bool On, Dropped;
+        public double Box, Sp, Last;
+        public uint Col, Hash;
+
+        public void Frame()
+        {
+            while (G.Poll(out var ev)) U.Feed(ev);
+            var c = U.Begin(0);
+            if (c == null) return;
+            var r = U.Canvas();
+            Box = U.Anim("box", On ? 200 : 10, 160, Ease.Out);
+            Sp = U.Anim("spring", On ? 1 : 0, 320, Ease.Spring);
+            Col = U.AnimColor("col", On ? 0xFF20D060u : 0x00000000u, 200, Ease.Linear);
+            if (!Dropped) Last = U.Anim("gone", On ? 5 : 0, 100, Ease.Linear);
+            if (r != null)
+            {
+                r.DrawRect(Box, 20, 60, 40, 0xFFE0A030u);
+                r.DrawRRect(20 + Sp * 180, 90, 50, 30, Radii.All(15), 0xFF4FB3F7u);
+                r.DrawRect(20, 140, 260, 40, Col);
+            }
+            U.End();
+            Hash = Fnv(c.Pixels, c.Width, c.Height, c.Stride);
+        }
+    }
+
+    static void AnimsTest()
+    {
+        Check(Ease.Linear.At(0.25) == 0.25);
+        Check(Ease.In.At(0.5) == 0.125);
+        Check(Ease.Out.At(0.5) == 0.875);
+        Check(Ease.InOut.At(0.25) == 0.0625 && Ease.InOut.At(0.75) == 0.9375);
+        Check(Ease.Smooth.At(0.5) == 0.5);
+        Check(Easing.At(Ease.Bounce, 0.25) == 0.47265625);
+        Check(Ease.Out.At(-3) == 0 && Ease.In.At(7) == 1);
+        foreach (Ease e in Enum.GetValues(typeof(Ease)))
+            if (e != Ease.Custom && e != Ease.Back) Check(e.At(0) == 0 && e.At(1) == 1, $"{e} goes 0 to 1");
+        double peak = 0, low = 1, bpeak = 0;
+        for (int i = 1; i < 100; i++)
+        {
+            double v = Ease.Spring.At(i / 100.0), b = Ease.Bounce.At(i / 100.0);
+            peak = Math.Max(peak, v);
+            if (i > 30) low = Math.Min(low, v);
+            bpeak = Math.Max(bpeak, b);
+            Check(b >= 0);
+        }
+        Check(peak > 1.1 && peak < 1.25 && low < 1 && low > 0.9 && bpeak <= 1);
+
+        using var g = new Goome(new GoomeOptions { Backend = Backend.Test, Mode = Mode.Window, Width = 300, Height = 200, TestScript = "end 100000" });
+        using var u = new Ui(g);
+        var k = new AnimKit { G = g, U = u };
+        k.Frame();
+        Check(k.Box == 10 && k.Sp == 0 && k.Col == 0 && k.Last == 0);
+        k.Frame();
+        Check(!u.Animating);
+        var hs = new uint[4];
+        k.On = true;
+        double prev = k.Box, over = 0, mid = -1;
+        int moving = 0;
+        for (int f = 0; f < 60; f++)
+        {
+            k.Frame();
+            if (f == 1) hs[0] = k.Hash;
+            if (f == 4) hs[1] = k.Hash;
+            if (f == 8) hs[2] = k.Hash;
+            Check(k.Box >= prev);
+            prev = k.Box;
+            over = Math.Max(over, k.Sp);
+            if (f == 6) mid = k.Col;
+            if (u.Animating) moving = f + 1;
+        }
+        hs[3] = k.Hash;
+        Check(k.Box == 200 && k.Sp == 1 && k.Col == 0xFF20D060u && k.Last == 5);
+        Check(over > 1.05 && moving >= 19 && moving <= 22 && !u.Animating);
+        uint m = (uint)mid;
+        Check((m >> 24) > 0x70 && (m >> 24) < 0x90 && ((m >> 8) & 255) == 0xD0 && ((m >> 16) & 255) == 0x20);
+        k.On = false;
+        k.Frame();
+        Check(u.Animating && k.Box == 200);
+        k.Frame();
+        Check(k.Box < 200 && k.Box > 10);
+        k.On = true;
+        k.Frame();
+        Check(k.Box < 200 && u.Animating);
+        k.Dropped = true;
+        for (int i = 0; i < 1600; i++) k.Frame();
+        k.Dropped = false;
+        k.On = false;
+        k.Frame();
+        Check(k.Last == 0);
+        string got = string.Join(" ", hs.Select(x => x.ToString("x8")));
+        Console.WriteLine($"  anim hashes {got}");
+        Check(got == "0226f2f5 906d3ce5 db5848ad 12bea72d", "anim frames match c-goome's unit test");
+    }
+
+    static uint TextHash(Font f, double size, string s, uint argb, TextDirection dir, int w, int h)
+    {
+        using var c = Canvas.Create(w, h, 400);
+        c.Raw.Kx1 = w;
+        c.Raw.Ky1 = h;
+        Font.Direction = dir;
+        c.DrawText(f, size, 4, 4, s, argb);
+        Font.Direction = TextDirection.Auto;
+        var all = new uint[400 * 120];
+        c.Pixels.CopyTo(all);
+        return Fnv(all, 400, 120, 400);
+    }
+
+    static bool Near(double a, double b) => Math.Abs(a - b) < 0.01;
+
+    static void EmojiRtlTest()
+    {
+        using var f = Font.Load(File.ReadAllBytes(Data("colr.ttf")));
+        using var cb = Font.Load(File.ReadAllBytes(Data("cbdt.ttf")));
+        using var sb = Font.Load(File.ReadAllBytes(Data("sbix.ttf")));
+        using var d = Font.Load(File.ReadAllBytes(Data("sub.ttf")));
+        Check(Near(f.Measure(30, "\U0001F600\U0001F3FB"), 24));
+        Check(Near(f.Measure(30, "\U0001F600‍\U0001F600"), 24));
+        Check(Near(f.Measure(30, "❤"), 18) && Near(f.Measure(30, "❤️"), 24));
+        var got = new uint[6];
+        got[0] = TextHash(f, 30, "ab \U0001F600 \U0001F600\U0001F3FB \U0001F600‍\U0001F600 ❤ ❤️", 0xFF2040A0, TextDirection.Auto, 400, 60);
+        using (var c = Canvas.Create(400, 120))
+        {
+            c.DrawText(cb, 16, 4, 4, "\U0001F431", 0xFFFFFFFF);
+            c.DrawText(cb, 64, 30, 4, "\U0001F431", 0xFFFFFFFF);
+            c.DrawText(sb, 40, 120, 4, "\U0001F431\U0001F431", 0x80FFFFFF);
+            uint mid = c.Pixels[(4 + 40) * 400 + 30 + 35];
+            Check((mid >> 24) == 255 && (mid >> 16 & 255) > 200 && (mid >> 8 & 255) > 100 && (mid >> 8 & 255) < 210 && (mid & 255) < 120);
+            got[1] = Fnv(c.Pixels, 400, 120, 400);
+        }
+        d.Fallback(f);
+        d.Fallback(d);
+        Check(Near(d.Measure(20, "goome! \U0001F600"), d.Measure(20, "goome! ") + 16), "fallback font fills in the emoji");
+        Check(Throws<InvalidOperationException>(() => Font.BuiltIn.Fallback(f)));
+        got[2] = TextHash(d, 20, "goome! \U0001F600 Hi", 0xFFFFFFFF, TextDirection.Auto, 400, 40);
+        string heb = "ab אבג (12) c";
+        got[3] = TextHash(f, 24, heb, 0xFFFFFFFF, TextDirection.Auto, 400, 40);
+        Check(got[3] != TextHash(f, 24, heb, 0xFFFFFFFF, TextDirection.Rtl, 400, 40));
+        Check(got[3] == TextHash(f, 24, heb, 0xFFFFFFFF, TextDirection.Ltr, 400, 40));
+        got[4] = TextHash(f, 24, heb, 0xFFFFFFFF, TextDirection.Rtl, 400, 40);
+        Check(Font.Direction == TextDirection.Auto);
+        Check(Near(f.Measure(20, "بلام ببب لم"), 93.2));
+        got[5] = TextHash(f, 30, "بلام ببب لم بَب", 0xFFFFFFFF, TextDirection.Auto, 400, 50);
+        Check(got[5] != TextHash(f, 30, "ب لام ب ب ب لم", 0xFFFFFFFF, TextDirection.Auto, 400, 50));
+        string all = string.Join(" ", got.Select(x => x.ToString("x8")));
+        Console.WriteLine($"  emoji rtl hashes {all}");
+        Check(all == "3bab3875 85fe883a d3add387 b79518dd 49a72d7d 469719e1", "emoji and rtl text match c-goome's unit test");
+    }
+
+    sealed class ImeKit : IDisposable
+    {
+        public Goome G = null!;
+        public Ui U = null!;
+        public byte[] In = new byte[64], Ed = new byte[96];
+        public InputFlags Flags;
+        public string Ctl = "";
+        public uint Hash;
+
+        public static ImeKit Open(string script, string input, string edit, int focus)
+        {
+            var g = new Goome(new GoomeOptions { Backend = Backend.Test, Mode = Mode.Window, Width = 300, Height = 200, TestScript = script });
+            var k = new ImeKit { G = g, U = new Ui(g) };
+            k.U.Theme.Font = Font.BuiltIn;
+            k.U.Theme.FontSize = 14;
+            k.U.Theme.AnimMs = 0;
+            k.U.Config.BlinkMs = 0;
+            Set(k.In, input);
+            Set(k.Ed, edit);
+            k.Frame(focus);
+            k.Frame(0);
+            return k;
+        }
+
+        public void Frame(int focus = 0)
+        {
+            while (G.Poll(out var ev))
+            {
+                if (ev.Type == EventType.Control && ev.Message.StartsWith("ime ")) Ctl = ev.Message;
+                U.Feed(ev);
+            }
+            var c = U.Begin(0);
+            if (c == null) return;
+            if (focus == 1) U.SetFocus();
+            U.InputEx("in", In, InputFlags.NoSelectOnFocus | Flags);
+            if (focus == 2) U.SetFocus();
+            U.TextEdit("ed", Ed, 80);
+            U.End();
+            Hash = Fnv(c.Pixels, c.Width, c.Height, c.Stride);
+        }
+
+        public void Commit(string s)
+        {
+            G.PushCommit(s);
+            Frame();
+        }
+
+        public void Preedit(string s, int caret)
+        {
+            G.PushPreedit(s, caret);
+            Frame();
+        }
+
+        public void Key(int key, Mods mods = Mods.None)
+        {
+            G.Push(Event.KeyPress(key, mods, key >= 32 && key < 127 && (mods & Mods.Ctrl) == 0 ? ((char)key).ToString() : null));
+            Frame();
+        }
+
+        public string InText => Str(In);
+        public string EdText => Str(Ed);
+
+        public void Dispose()
+        {
+            U.Dispose();
+            G.Dispose();
+        }
+    }
+
+    static void ImeTest()
+    {
+        string longt = new string('q', 80);
+        using (var g = new Goome(new GoomeOptions { Backend = Backend.Test, Mode = Mode.Window, Width = 100, Height = 100, TestScript = $"1 text {longt};2 preedit にほん 3;3 preedit abc;4 preedit;end 10" }))
+        {
+            Check(g.Push(Event.Commit("hi")));
+            Check(g.Poll(out var e) && e.Type == EventType.Text && e.IsText && e.Message == "hi" && g.EventText == "hi");
+            Check(g.TextInput(true, new Rect(10, 20, 1, 16)) && g.TextInput(false));
+            int got = 0;
+            bool quit = false;
+            for (int f = 0; f < 20 && !quit; f++)
+            {
+                while (g.Poll(out e))
+                {
+                    if (e.Type == EventType.Quit) quit = true;
+                    if (e.Type == EventType.Text)
+                    {
+                        got |= 1;
+                        Check(e.Message == longt && e.Raw.Id == 0, "long commits come out whole");
+                    }
+                    if (e.IsPreedit && e.Message == "にほん")
+                    {
+                        got |= 2;
+                        Check(e.Raw.Id == 3 && e.Caret == 1 && g.PreeditCursor == 1, "the caret is a char index in C#");
+                    }
+                    if (e.IsPreedit && e.Message == "abc")
+                    {
+                        got |= 4;
+                        Check(e.Caret == 3);
+                    }
+                    if (e.IsPreedit && e.Message == "")
+                    {
+                        got |= 8;
+                        Check(g.PreeditCursor == 0 && g.EventText == "");
+                    }
+                }
+                var c = g.Begin(0);
+                if (c != null) g.End(c);
+            }
+            Check(got == 15);
+            Check(Event.Preedit("にほ", 1).Raw.Id == 3 && Event.Preedit("ab").Raw.Id == 2);
+        }
+
+        var h = new uint[4];
+        uint edh;
+        using (var k = ImeKit.Open("end 100000", "ab", "", 1))
+        {
+            h[0] = k.Hash;
+            k.Preedit("xyz", 1);
+            h[1] = k.Hash;
+            k.Preedit("xyz", 3);
+            h[2] = k.Hash;
+            Check(h[0] != h[1] && h[1] != h[2] && k.InText == "ab");
+            k.Preedit("", 0);
+            Check(k.Hash == h[0]);
+            k.Commit("日本");
+            Check(k.InText == "ab日本", "TEXT goes into the focused input");
+            k.Key('c');
+            Check(k.InText == "ab日本c");
+            k.Key('z', Mods.Ctrl);
+            Check(k.InText == "ab日本");
+            k.Key('z', Mods.Ctrl);
+            Check(k.InText == "ab日本c");
+            k.Key('a', Mods.Ctrl);
+            k.Commit("é");
+            Check(k.InText == "é");
+            k.Key('z', Mods.Ctrl);
+            Check(k.InText == "ab日本c");
+        }
+        using (var k = ImeKit.Open("end 100000", "", "line", 2))
+        {
+            h[3] = k.Hash;
+            k.Preedit("kana", 2);
+            Check(k.Hash != h[3]);
+            edh = k.Hash;
+            k.Preedit("", 0);
+            k.Commit("かな\n");
+            Check(k.EdText == "かな\nline" && k.InText == "");
+            k.Key('z', Mods.Ctrl);
+            Check(k.EdText == "line");
+        }
+        using (var k = ImeKit.Open("end 100000", "", "", 1))
+        {
+            k.Flags = InputFlags.Number;
+            k.Commit("1a2.5");
+            Check(k.InText == "12.5");
+        }
+        using (var k = ImeKit.Open("end 100000", "", "", 1))
+        {
+            string big = string.Concat(Enumerable.Repeat("日本", 15));
+            Check(k.G.PushCommit(big) == big.Length);
+            k.Frame();
+            Check(k.InText == big[..21], "PushCommit splits long text and the input keeps what fits");
+        }
+        using (var k = ImeKit.Open("4 ime;end 100000", "", "", 1))
+        {
+            for (int f = 0; f < 8; f++) k.Frame();
+            var p = k.Ctl.Split(' ', ',', 'x');
+            Check(p.Length == 6 && p[1] == "1" && int.Parse(p[2]) > 0 && int.Parse(p[3]) > 0 && int.Parse(p[5]) >= 14, $"focused input turns the ime on ({k.Ctl})");
+        }
+        string all = $"{h[1]:x8} {h[2]:x8} {edh:x8}";
+        Console.WriteLine($"  ime hashes {all}");
+        Check(all == "2e20540f ceafcbad c9c1add5", "preedit frames match c-goome's unit test");
+    }
+
+    sealed class AxKit
+    {
+        public Goome G = null!;
+        public Ui U = null!;
+        public int Ok, Mode, Fruit, Tab, CustomHits;
+        public bool Dark, Open;
+        public double Vol = 2;
+        public byte[] Name = new byte[64], Note = new byte[256];
+        public A11yNode[] N = Array.Empty<A11yNode>();
+        static readonly string[] fruits = { "Mango", "Kiwi", "Fig" }, tabs = { "One", "Two" };
+
+        public void Frame()
+        {
+            while (G.Poll(out var ev)) U.Feed(ev);
+            if (U.Begin(0) == null) return;
+            U.App("Demo", AppFlags.TitleBar | AppFlags.StatusBar);
+            U.Label("Hello there");
+            if (U.Button("OK")) Ok++;
+            U.Checkbox("Dark", ref Dark);
+            U.Radio("Big", ref Mode, 1);
+            U.Slider("Volume", ref Vol, 0, 10, "%.1f");
+            U.Input("Name", Name);
+            U.Combo("Fruit", ref Fruit, fruits);
+            U.Tabs("tabs", tabs, ref Tab);
+            if (U.Tree("Folder", ref Open))
+            {
+                U.Label("inside");
+                U.TreeEnd();
+            }
+            U.Progress(0.25);
+            U.TextEdit("Notes", Note, 60);
+            U.A11yRole(Role.Button, "Knob");
+            U.A11yValue("11");
+            U.Custom("knob", 40, 40, ItemFlags.None, out var it);
+            if (it.Clicked) CustomHits++;
+            U.StatusBar("ready");
+            U.AppEnd();
+            U.End();
+            N = U.AccessibilityTree();
+        }
+
+        public A11yNode? Find(Role role, string label) => N.FirstOrDefault(n => n.Role == role && n.Label == label);
+
+        public void Send(A11yAction a, A11yNode? n, string? text = null)
+        {
+            if (n != null) U.A11yPerform(a, n.Id, text);
+        }
+    }
+
+    static void A11yTest()
+    {
+        using var g = new Goome(new GoomeOptions { Backend = Backend.Test, Mode = Mode.Window, Width = 420, Height = 700, TestScript = "end 100000" });
+        using var u = new Ui(g);
+        u.Theme.Font = Font.BuiltIn;
+        var k = new AxKit { G = g, U = u };
+        Set(k.Name, "Bo");
+        k.Frame();
+        Check(k.N.Length > 15);
+        var app = k.Find(Role.Window, "Demo");
+        var ok = k.Find(Role.Button, "OK");
+        var dark = k.Find(Role.Checkbox, "Dark");
+        var vol = k.Find(Role.Slider, "Volume");
+        var name = k.Find(Role.Input, "Name");
+        var fruit = k.Find(Role.Combo, "Fruit");
+        var tree = k.Find(Role.Tree, "Folder");
+        var knob = k.Find(Role.Button, "Knob");
+        var tab2 = k.Find(Role.Tab, "Two");
+        var big = k.Find(Role.Radio, "Big");
+        var notes = k.Find(Role.Input, "Notes");
+        Check(app != null && app.Index == 0 && app.Parent == -1);
+        Check(ok != null && ok.Parent == 0 && ok.Width > 0 && ok.Height > 0);
+        Check(k.Find(Role.Text, "Hello there") != null && k.Find(Role.Text, "ready") != null);
+        Check(k.Find(Role.Button, "Close") != null && k.Find(Role.Button, "Minimize") != null);
+        Check(dark != null && !dark.Checked && big != null && !big.Checked);
+        Check(vol != null && vol.Number == 2 && vol.Min == 0 && vol.Max == 10 && vol.Value == "2.0");
+        Check(name != null && name.Value == "Bo");
+        Check(fruit != null && fruit.Value == "Mango" && !fruit.Expanded);
+        Check(tab2 != null && k.N[tab2.Parent].Role == Role.Group && !tab2.Selected);
+        Check(k.Find(Role.Tab, "One")?.Selected == true);
+        Check(tree != null && !tree.Expanded && k.Find(Role.Text, "inside") == null);
+        Check(knob != null && knob.Value == "11" && notes != null);
+        var pr = k.N.LastOrDefault(n => n.Role == Role.Progress);
+        Check(pr != null && pr.Number == 0.25 && pr.Value == "25%");
+        var ids = k.N.Select(n => n.Id).ToArray();
+        k.Frame();
+        Check(k.N.Select(n => n.Id).SequenceEqual(ids), "ids stay the same between frames");
+        Check(ids.Distinct().Count() == ids.Length);
+
+        k.Send(A11yAction.Press, ok);
+        k.Send(A11yAction.Press, dark);
+        k.Send(A11yAction.Press, big);
+        k.Send(A11yAction.Set, vol, "7.5");
+        k.Send(A11yAction.Set, name, "hello there");
+        k.Send(A11yAction.Press, knob);
+        k.Send(A11yAction.Expand, tree);
+        k.Send(A11yAction.Press, tab2);
+        k.Send(A11yAction.Set, notes, "line one");
+        k.Frame();
+        Check(k.Ok == 1 && k.Dark && k.Mode == 1 && k.Vol == 7.5 && Str(k.Name) == "hello there" && k.CustomHits == 1 && k.Open && k.Tab == 1, "screen reader actions reach the widgets");
+        Check(Str(k.Note) == "line one");
+        k.Frame();
+        Check(k.Find(Role.Checkbox, "Dark")?.Checked == true);
+        Check(k.Find(Role.Slider, "Volume")?.Value == "7.5");
+        Check(k.Find(Role.Input, "Name")?.Value == "hello there");
+        tree = k.Find(Role.Tree, "Folder");
+        Check(tree != null && tree.Expanded);
+        var inside = k.Find(Role.Text, "inside");
+        Check(inside != null && tree != null && inside.Parent == tree.Index);
+
+        k.Send(A11yAction.Focus, k.Find(Role.Input, "Name"));
+        k.Frame();
+        k.Frame();
+        name = k.Find(Role.Input, "Name");
+        Check(name != null && name.Focused && name.Caret == 11);
+        Check(k.N.Count(n => n.Focused) == 1);
+
+        k.Send(A11yAction.Expand, k.Find(Role.Combo, "Fruit"));
+        k.Frame();
+        k.Frame();
+        fruit = k.Find(Role.Combo, "Fruit");
+        var fig = k.Find(Role.Item, "Fig");
+        Check(fruit != null && fruit.Expanded && fig != null && k.N[fig.Parent].Role == Role.List && k.N[fig.Parent].Parent == fruit.Index);
+        k.Send(A11yAction.Press, fig);
+        k.Frame();
+        k.Frame();
+        Check(k.Fruit == 2 && k.Find(Role.Item, "Fig") == null && k.Find(Role.Combo, "Fruit")?.Value == "Fig");
+        k.Send(A11yAction.Set, k.Find(Role.Combo, "Fruit"), "Kiwi");
+        k.Frame();
+        Check(k.Fruit == 1);
+        u.A11y(false);
+        k.Frame();
+        Check(k.N.Length == 0);
+
+        using var off = Goome.OpenOffscreen(200, 100);
+        using var ou = new Ui(off);
+        ou.Theme.Font = Font.BuiltIn;
+        for (int pass = 0; pass < 2; pass++)
+        {
+            if (ou.Begin(0) != null)
+            {
+                ou.Button("Hi");
+                ou.End();
+            }
+            Check(ou.AccessibilityTree().Length == pass, "offscreen starts with a11y off");
+            ou.A11y(true);
+        }
+        if (ou.Begin(0) != null)
+        {
+            ou.Button("Hi");
+            ou.End();
+        }
+        var t = ou.AccessibilityTree();
+        Check(t.Length == 1 && t[0].Role == Role.Button && t[0].Label == "Hi");
     }
 
     static string FindRoot()
@@ -93,13 +575,28 @@ static class Program
             ["goome_opts"] = typeof(RawOpts), ["goome_rect"] = typeof(Rect), ["goome_monitor"] = typeof(RawMonitor), ["goome_image"] = typeof(RawImage),
             ["goome_canvas"] = typeof(RawCanvas), ["goome_event"] = typeof(RawEvent), ["goome_pacer"] = typeof(Pacer), ["goome_radii"] = typeof(Radii),
             ["goome_bitmap"] = typeof(RawBitmap), ["goome_theme"] = typeof(RawTheme), ["goome_skin"] = typeof(RawSkin), ["goome_ui_item"] = typeof(Item),
-            ["goome_combo"] = typeof(RawCombo), ["goome_ui_config"] = typeof(RawUiConfig),
+            ["goome_combo"] = typeof(RawCombo), ["goome_ui_config"] = typeof(RawUiConfig), ["goome_a11y_node"] = typeof(RawA11yNode),
         };
+        var enums = new Dictionary<string, Type>
+        {
+            ["EventType"] = typeof(EventType), ["Ease"] = typeof(Ease), ["TextDirection"] = typeof(TextDirection), ["Role"] = typeof(Role), ["A11yState"] = typeof(A11yState),
+        };
+        int enumLines = 0;
         var seen = new Dictionary<Type, int>();
         int lines = 0;
         foreach (var line in text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             var parts = line.Split(' ');
+            if (parts[0] == "enum")
+            {
+                var dot = parts[1].Split('.');
+                var et = enums[dot[0]];
+                bool has = Enum.IsDefined(et, dot[1]);
+                Check(has, $"{parts[1]} exists");
+                if (has) Check(Convert.ToInt32(Enum.Parse(et, dot[1])) == int.Parse(parts[2]), $"{parts[1]} is {parts[2]} like in C");
+                enumLines++;
+                continue;
+            }
             var t = types[parts[0]];
             int want = int.Parse(parts[2]);
             lines++;
@@ -122,6 +619,9 @@ static class Program
             seen[t] = seen.GetValueOrDefault(t) + 1;
         }
         Check(lines > 110);
+        Check(enumLines >= 40);
+        foreach (var et in new[] { typeof(Ease), typeof(TextDirection), typeof(Role) })
+            Check(Enum.GetValues(et).Length == text.Split('\n').Count(l => l.StartsWith($"enum {et.Name}.")), $"every {et.Name} value checked");
         foreach (var t in types.Values)
             Check(seen.GetValueOrDefault(t) == t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Length, $"every field of {t.Name} checked");
     }

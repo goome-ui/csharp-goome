@@ -7,6 +7,8 @@ namespace GoomeSharp
     {
         IntPtr f;
         readonly bool owned;
+        System.Collections.Generic.List<Font>? fallbacks;
+        static TextDirection direction;
 
         Font(IntPtr h, bool owned) => (f, this.owned) = (h, owned);
 
@@ -69,6 +71,27 @@ namespace GoomeSharp
         }
 
         public double LineHeight(double size) => Native.TextLineHeight(Handle, size);
+
+        public void Fallback(Font fallback)
+        {
+            if (fallback == null) throw new ArgumentNullException(nameof(fallback));
+            var fh = Handle;
+            if (fh == IntPtr.Zero) throw new InvalidOperationException("the built in font cant have fallbacks");
+            Native.FontFallback(fh, fallback.Handle);
+            if (fallback == this) return;
+            fallbacks ??= new System.Collections.Generic.List<Font>();
+            if (!fallbacks.Contains(fallback)) fallbacks.Add(fallback);
+        }
+
+        public static TextDirection Direction
+        {
+            get => direction;
+            set
+            {
+                Native.TextDir((int)value);
+                direction = value;
+            }
+        }
 
         public void Dispose()
         {

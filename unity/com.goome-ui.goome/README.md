@@ -66,7 +66,9 @@ if (!view.WantsMouse) transform.Rotate(0, Input.GetAxis("Mouse X") * 2, 0);
 
 <p align="center">
 Copy and paste go through <code>GUIUtility.systemCopyBuffer</code>, so ctrl+c in a goome input lands in the real clipboard. The cursor shape goome asks for (a text beam, resize arrows, that kind of thing) gets set from the <code>cursors</code> pictures on the component if you give it some, and hidden when goome wants it hidden.<br> <br>
-The pixels are premultiplied BGRA, so it comes with its own <code>GoomeUI/Premultiplied</code> shader (blend One OneMinusSrcAlpha), GoomeView sets it up on its own.
+The pixels are premultiplied BGRA, so it comes with its own <code>GoomeUI/Premultiplied</code> shader (blend One OneMinusSrcAlpha), GoomeView sets it up on its own.<br> <br>
+IME typing works too. While a goome text box has focus, <code>view.WantsText</code> is on, the IME gets turned on and its window goes under the input. The half typed text comes from <code>Input.compositionString</code> (or the Input System's <code>onIMECompositionChange</code>) and the finished text goes in as one commit.<br> <br>
+<code>view.GetAccessibilityTree()</code> gives you every widget as a node with its role, label, value, states and parent, ready for whatever a11y plugin you use. <code>view.TryGetScreenRect(node, out rect)</code> says where it is on screen (on a RawImage) and <code>view.A11yPerform(A11yAction.Press, node.Id)</code> clicks it like a screen reader would. Untick <code>accessibility</code> if you dont need it.
 </p>
 </details>
 

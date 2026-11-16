@@ -827,6 +827,53 @@ namespace GoomeSharp
             return p == null ? null : g.Wrap(p);
         }
 
+        public double Anim(string id, double target, double ms, Ease ease = Ease.Smooth)
+        {
+            var hu = Handle;
+            fixed (byte* s = U8.A(id)) return Native.UiAnim(hu, s, target, ms, (int)ease);
+        }
+
+        public uint AnimColor(string id, uint target, double ms, Ease ease = Ease.Smooth)
+        {
+            var hu = Handle;
+            fixed (byte* s = U8.A(id)) return Native.UiAnimColor(hu, s, target, ms, (int)ease);
+        }
+
+        public void A11y(bool on) => Native.UiA11y(Handle, on ? 1 : 0);
+
+        public void A11yRole(Role role, string label)
+        {
+            var hu = Handle;
+            fixed (byte* s = U8.A(label)) Native.UiA11yRole(hu, (int)role, s);
+        }
+
+        public void A11yValue(string value)
+        {
+            var hu = Handle;
+            fixed (byte* s = U8.A(value)) Native.UiA11yValue(hu, s);
+        }
+
+        RawA11yNode[] tree = new RawA11yNode[64];
+
+        public A11yNode[] AccessibilityTree()
+        {
+            var hu = Handle;
+            int n;
+            while (true)
+            {
+                fixed (RawA11yNode* p = tree) n = Native.A11yTree(hu, p, tree.Length);
+                if (n <= tree.Length || tree.Length >= 65536) break;
+                tree = new RawA11yNode[Math.Max(n, tree.Length * 2)];
+            }
+            n = Math.Min(n, tree.Length);
+            var o = new A11yNode[Math.Max(0, n)];
+            fixed (RawA11yNode* p = tree)
+                for (int i = 0; i < o.Length; i++) o[i] = new A11yNode(i, p + i);
+            return o;
+        }
+
+        public bool A11yPerform(A11yAction action, uint id, string? text = null) => g.Push(Event.A11y(action, id, text));
+
         public Span<double> Store(string id, int n)
         {
             if (n <= 0) throw new ArgumentOutOfRangeException(nameof(n));

@@ -132,8 +132,8 @@ It isnt on NuGet, but every <a href="https://github.com/goome-ui/csharp-goome/re
 
 ```sh
 mkdir goome-pkgs
-curl -fsSL -o goome-pkgs/GoomeSharp.0.4.0.nupkg https://github.com/goome-ui/csharp-goome/releases/download/v0.4.0/GoomeSharp.0.4.0.nupkg
-dotnet add package GoomeSharp --version 0.4.0 --source ./goome-pkgs
+curl -fsSL -o goome-pkgs/GoomeSharp.0.5.0.nupkg https://github.com/goome-ui/csharp-goome/releases/download/v0.5.0/GoomeSharp.0.5.0.nupkg
+dotnet add package GoomeSharp --version 0.5.0 --source ./goome-pkgs
 ```
 
 <p align="center">
@@ -160,7 +160,7 @@ Swap the version in the lines above for any other one, like <code>0.2.0</code>. 
 </p>
 
 ```
-https://github.com/goome-ui/csharp-goome.git?path=/unity/com.goome-ui.goome#v0.4.0
+https://github.com/goome-ui/csharp-goome.git?path=/unity/com.goome-ui.goome#v0.5.0
 ```
 
 <p align="center">
@@ -367,6 +367,95 @@ On windows, x11 or mac the grab takes focus from the game so its raw input stops
 </details>
 
 <details>
+<summary align="center"><b>🌀 Animations 🌀</b></summary>
+
+<br>
+
+<p align="center">
+<code>ui.Anim</code> gives you a number that slides toward the target you pass it, and remembers where it was by id. Change the target and it moves there over the time you gave it. <code>ui.AnimColor</code> is the same thing for colors. While something is still moving <code>ui.Animating</code> is true, so you know to draw another frame.
+</p>
+
+```csharp
+double x = ui.Anim("panel", open ? 240 : 0, 300, Ease.Spring);
+uint col = ui.AnimColor("dot", busy ? 0xFFE0483E : 0xFF21A66B, 200, Ease.InOut);
+double half = Ease.Bounce.At(0.5);
+```
+
+<p align="center">
+Theres Linear, In, Out, InOut, Smooth, Back, Spring and Bounce. Spring and Back go a little past the end before they settle. <code>examples/Anim</code> shows every one of them next to each other.
+</p>
+</details>
+
+<details>
+<summary align="center"><b>⌨️ IME Typing ⌨️</b></summary>
+
+<br>
+
+<p align="center">
+Japanese, Chinese, Korean and dead keys all work in inputs and <code>TextEdit</code>. When a text box gets focus the ui turns the IME on and puts its window next to the caret, then the half typed text shows underlined until you pick something.<br> <br>
+In your own engine you push it in yourself. <code>PushPreedit</code> is the text thats still being composed, <code>PushCommit</code> is the finished text (any length, it splits it up for you):
+</p>
+
+```csharp
+g.PushPreedit("にほ", caret: 2);
+g.PushPreedit("");
+g.PushCommit("日本");
+while (g.Poll(out var ev))
+    if (ev.Type == EventType.Text) Console.WriteLine(ev.Message);
+g.TextInput(true, new Rect(40, 60, 1, 18));
+```
+
+<p align="center">
+<code>ev.Message</code> has the whole text for Text and Preedit events, not just the first 63 bytes, and <code>ev.Caret</code> is a normal C# string index. The Unity <code>GoomeView</code> does all of this for you from <code>Input.compositionString</code> or the Input System's IME events.
+</p>
+</details>
+
+<details>
+<summary align="center"><b>🦻 Screen Readers 🦻</b></summary>
+
+<br>
+
+<p align="center">
+The ui builds a tree of everything on screen each frame, with roles, labels, values and states like focused or checked. In window mode goome hands it to the OS screen reader by itself. Offscreen its off, turn it on with <code>ui.A11y(true)</code> and read it after <code>End</code> to feed your engine's own accessibility stuff:
+</p>
+
+```csharp
+ui.A11y(true);
+foreach (var n in ui.AccessibilityTree())
+    Console.WriteLine($"{n.Role} {n.Label} {n.Value} parent {n.Parent} focused {n.Focused}");
+ui.A11yPerform(A11yAction.Press, okButton.Id);
+ui.A11yRole(Role.Button, "Knob");
+ui.A11yValue("11");
+ui.Custom("knob", 40, 40, ItemFlags.None, out var it);
+```
+
+<p align="center">
+<code>A11yPerform</code> does press, set, expand and focus the same way a screen reader would. <code>A11yRole</code> and <code>A11yValue</code> name your own <code>ui.Custom</code> widgets so they dont show up as nothing. In Unity, <code>GoomeView.GetAccessibilityTree()</code> gives you the same nodes and <code>TryGetScreenRect</code> says where each one is on screen.
+</p>
+</details>
+
+<details>
+<summary align="center"><b>😀 Emoji And RTL 😀</b></summary>
+
+<br>
+
+<p align="center">
+Color emoji work (COLR, CBDT and sbix fonts), with skin tones, ZWJ families and flags. Arabic gets joined up properly and Hebrew and Arabic go right to left, mixed with english in the same line too. <code>Font.System()</code> already adds the system emoji font, for your own fonts add a fallback:
+</p>
+
+```csharp
+using var font = Font.Load("myfont.ttf");
+using var emoji = Font.Load("NotoColorEmoji.ttf");
+font.Fallback(emoji);
+Font.Direction = TextDirection.Rtl;
+```
+
+<p align="center">
+<code>Font.Direction</code> is for all text, Auto (the default) picks it per line from the first real letter. <code>examples/Text</code> has emoji, Arabic and Hebrew lines plus inputs you can type RTL in.
+</p>
+</details>
+
+<details>
 <summary align="center"><b>📚 The API 📚</b></summary>
 
 <br>
@@ -411,6 +500,10 @@ Everything in goome.h is in there, just shaped like C#. If something can fail fo
 | `ui.Config` / `Config.Bind` | timings, toggles, cursors, the key map and a custom ease |
 | `ui.InputEx` / `ui.Password` | inputs with a hint, password dots, read only, numbers only, enter to submit |
 | `g.FrameDirty` / `g.FrameCopy` | what changed in the last frame, and copying it out as BGRA or RGBA |
+| `ui.Anim` / `ui.AnimColor` / `Ease.Spring.At(t)` | values and colors that slide to a target, and the ease curves by themselves |
+| `g.PushCommit` / `g.PushPreedit` / `g.TextInput` / `g.EventText` | IME text in and out, `EventType.Text` and `EventType.Preedit` events |
+| `ui.A11y` / `AccessibilityTree` / `A11yPerform` / `A11yRole` / `A11yValue` | the screen reader tree and its actions |
+| `font.Fallback` / `Font.Direction` | more fonts for missing chars like emoji, and LTR / RTL / Auto for text |
 
 <p align="center">
 <code>Bitmap</code>, <code>Font</code>, <code>Canvas.Create</code>, <code>Ui</code> and <code>Goome</code> are all <code>IDisposable</code>. Disposing a <code>Goome</code> also disposes its <code>Ui</code>s, and using anything after that throws <code>ObjectDisposedException</code>, it wont crash.<br> <br>
