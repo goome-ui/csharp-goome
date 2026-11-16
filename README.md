@@ -10,6 +10,7 @@
 
 <p align="center">
   <img src="https://goome-ui.github.io/docs/assets/badges/csharp-net8-netstandard21.svg" alt=".NET 8+ and netstandard2.1">
+  <a href="https://www.nuget.org/packages/GoomeSharp"><img src="https://goome-ui.github.io/docs/assets/badges/nuget-goomesharp.svg" alt="NuGet"></a>
   <img src="https://img.shields.io/badge/Unity-2021.3%2B-1b1d22?style=flat-square&logo=unity&logoColor=white" alt="Unity 2021.3+">
   <img src="https://img.shields.io/badge/Linux-X11%20%2B%20Wayland-1b1d22?style=flat-square&logo=linux&logoColor=white" alt="Linux">
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-1b1d22?style=flat-square&logo=windows11&logoColor=white" alt="Windows">
@@ -126,15 +127,13 @@ The game doesnt get clicks or keys while the menu wants them. Mono and IL2CPP bo
 
 <br>
 
-<p align="center">
-It isnt on NuGet, but every <a href="https://github.com/goome-ui/csharp-goome/releases">release</a> has a .nupkg with the native lib for every OS inside. Download it into a folder and add it from there:
-</p>
-
 ```sh
-mkdir goome-pkgs
-curl -fsSL -o goome-pkgs/GoomeSharp.0.5.0.nupkg https://github.com/goome-ui/csharp-goome/releases/download/v0.5.0/GoomeSharp.0.5.0.nupkg
-dotnet add package GoomeSharp --version 0.5.0 --source ./goome-pkgs
+dotnet add package GoomeSharp
 ```
+
+<p align="center">
+Its on <a href="https://www.nuget.org/packages/GoomeSharp">NuGet</a> and the package has the native lib for every OS inside, so theres nothing to build. Every <a href="https://github.com/goome-ui/csharp-goome/releases">release</a> also has the .nupkg if you want it offline, put it in a folder and <code>dotnet add package GoomeSharp --source ./that-folder</code>.
+</p>
 
 <p align="center">
 Or build it from source. Clone it and build the native lib, you need a C compiler (gcc, clang, or mingw gcc on windows) and the .NET 8 SDK or newer.
@@ -156,11 +155,11 @@ Want your own package? <code>dotnet pack src/GoomeSharp -c Release -o out</code>
 <h3 align="center">📦 Other Versions</h3>
 
 <p align="center">
-Swap the version in the lines above for any other one, like <code>0.2.0</code>. For Unity put the tag on the end of the git URL (the package is there from 0.2.0 on):
+<code>dotnet add package GoomeSharp --version 0.4.0</code> pins one. NuGet has 0.4.0 and up, the older ones are .nupkg files on the releases page. For Unity put the tag on the end of the git URL (the package is there from 0.2.0 on):
 </p>
 
 ```
-https://github.com/goome-ui/csharp-goome.git?path=/unity/com.goome-ui.goome#v0.5.0
+https://github.com/goome-ui/csharp-goome.git?path=/unity/com.goome-ui.goome#v0.5.1
 ```
 
 <p align="center">
