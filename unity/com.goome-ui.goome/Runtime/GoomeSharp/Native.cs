@@ -50,6 +50,9 @@ namespace GoomeSharp
         [DllImport(Lib, EntryPoint = "goome_clipboard_get", ExactSpelling = true)] internal static extern int ClipboardGet(IntPtr g, byte* buf, int cap);
         [DllImport(Lib, EntryPoint = "goome_drop_path", ExactSpelling = true)] internal static extern byte* DropPath(IntPtr g);
         [DllImport(Lib, EntryPoint = "goome_push", ExactSpelling = true)] internal static extern int Push(IntPtr g, RawEvent* ev);
+        [DllImport(Lib, EntryPoint = "goome_event_text", ExactSpelling = true)] internal static extern byte* EventText(IntPtr g);
+        [DllImport(Lib, EntryPoint = "goome_preedit_cursor", ExactSpelling = true)] internal static extern int PreeditCursor(IntPtr g);
+        [DllImport(Lib, EntryPoint = "goome_text_input", ExactSpelling = true)] internal static extern int TextInput(IntPtr g, int on, Rect* caret);
         [DllImport(Lib, EntryPoint = "goome_resize", ExactSpelling = true)] internal static extern int Resize(IntPtr g, int w, int h, double scale);
         [DllImport(Lib, EntryPoint = "goome_frame", ExactSpelling = true)] internal static extern int Frame(IntPtr g, RawImage* img);
         [DllImport(Lib, EntryPoint = "goome_hit", ExactSpelling = true)] internal static extern int Hit(IntPtr g, double x, double y);
@@ -98,6 +101,9 @@ namespace GoomeSharp
         [DllImport(Lib, EntryPoint = "goome_text", ExactSpelling = true)] internal static extern double Text(RawCanvas* c, IntPtr f, double size, double x, double y, byte* s, uint argb);
         [DllImport(Lib, EntryPoint = "goome_text_measure", ExactSpelling = true)] internal static extern double TextMeasure(IntPtr f, double size, byte* s, double* h);
         [DllImport(Lib, EntryPoint = "goome_text_line_height", ExactSpelling = true)] internal static extern double TextLineHeight(IntPtr f, double size);
+
+        [DllImport(Lib, EntryPoint = "goome_font_fallback", ExactSpelling = true)] internal static extern void FontFallback(IntPtr f, IntPtr fallback);
+        [DllImport(Lib, EntryPoint = "goome_text_dir", ExactSpelling = true)] internal static extern void TextDir(int dir);
 
         [DllImport(Lib, EntryPoint = "goome_ui_new", ExactSpelling = true)] internal static extern IntPtr UiNew(IntPtr g);
         [DllImport(Lib, EntryPoint = "goome_ui_free", ExactSpelling = true)] internal static extern void UiFree(IntPtr u);
@@ -207,6 +213,14 @@ namespace GoomeSharp
         [DllImport(Lib, EntryPoint = "goome_ui_config_default", ExactSpelling = true)] internal static extern void UiConfigDefault(RawUiConfig* c);
         [DllImport(Lib, EntryPoint = "goome_ui_bind", ExactSpelling = true)] internal static extern int UiBind(IntPtr u, int act, byte* combos);
         [DllImport(Lib, EntryPoint = "goome_ui_input_ex", ExactSpelling = true)] internal static extern int UiInputEx(IntPtr u, byte* label, byte* buf, int cap, int flags, byte* hint);
+
+        [DllImport(Lib, EntryPoint = "goome_ease", ExactSpelling = true)] internal static extern double Ease(int ease, double t);
+        [DllImport(Lib, EntryPoint = "goome_ui_anim", ExactSpelling = true)] internal static extern double UiAnim(IntPtr u, byte* id, double target, double ms, int ease);
+        [DllImport(Lib, EntryPoint = "goome_ui_anim_color", ExactSpelling = true)] internal static extern uint UiAnimColor(IntPtr u, byte* id, uint target, double ms, int ease);
+        [DllImport(Lib, EntryPoint = "goome_ui_a11y", ExactSpelling = true)] internal static extern void UiA11y(IntPtr u, int on);
+        [DllImport(Lib, EntryPoint = "goome_ui_a11y_role", ExactSpelling = true)] internal static extern void UiA11yRole(IntPtr u, int role, byte* label);
+        [DllImport(Lib, EntryPoint = "goome_ui_a11y_value", ExactSpelling = true)] internal static extern void UiA11yValue(IntPtr u, byte* value);
+        [DllImport(Lib, EntryPoint = "goome_a11y_tree", ExactSpelling = true)] internal static extern int A11yTree(IntPtr u, RawA11yNode* o, int max);
 
         internal static long NowMs() => Os.Windows ? NowMs32() : (long)NowMs64();
 

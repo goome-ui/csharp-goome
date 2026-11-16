@@ -169,7 +169,18 @@ namespace GoomeSharp
             int r;
             fixed (RawEvent* p = &ev.raw) r = Native.Poll(Handle, p, timeoutMs);
             if (r < 0) throw Fail(r);
+            if (r > 0 && (ev.Type == EventType.Text || ev.Type == EventType.Preedit)) ev.full = EventText;
             return r > 0;
+        }
+
+        public string EventText => Native.Str(Native.EventText(Handle)) ?? "";
+        public int PreeditCursor => GoomeSharp.Utf8.CharIndex(EventText, Native.PreeditCursor(Handle));
+
+        public bool TextInput(bool on, Rect? caret = null)
+        {
+            var h = Handle;
+            if (caret is Rect r) return Native.TextInput(h, on ? 1 : 0, &r) == 0;
+            return Native.TextInput(h, on ? 1 : 0, null) == 0;
         }
 
         public bool Pointer(out double x, out double y, out int buttons)
@@ -297,6 +308,22 @@ namespace GoomeSharp
             RawEvent r = ev.raw;
             return Native.Push(Handle, &r) == 0;
         }
+
+        public int PushCommit(string text)
+        {
+            int n = 0;
+            while (text.Length > 0)
+            {
+                var e = Event.Commit(text);
+                string sent = e.Message;
+                if (sent.Length == 0 || !Push(e)) break;
+                n += sent.Length;
+                text = text.Substring(sent.Length);
+            }
+            return n;
+        }
+
+        public bool PushPreedit(string text, int caret = -1) => Push(Event.Preedit(text, caret));
 
         public int PushText(string text, Mods mods = Mods.None)
         {

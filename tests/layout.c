@@ -5,6 +5,7 @@
 
 #define S(t) printf("%s . %u\n", #t, (unsigned)sizeof(t))
 #define F(t, f) printf("%s %s %u\n", #t, #f, (unsigned)offsetof(t, f))
+#define E(n, v) printf("enum %s %d\n", n, (int)(v))
 
 int main(void)
 {
@@ -67,5 +68,21 @@ int main(void)
     F(goome_ui_item, held), F(goome_ui_item, released), F(goome_ui_item, clicked), F(goome_ui_item, double_clicked), F(goome_ui_item, right_clicked);
     F(goome_ui_item, focused), F(goome_ui_item, mx), F(goome_ui_item, my), F(goome_ui_item, dx), F(goome_ui_item, dy), F(goome_ui_item, drag_x);
     F(goome_ui_item, drag_y), F(goome_ui_item, key);
+    S(goome_a11y_node);
+    F(goome_a11y_node, role), F(goome_a11y_node, parent), F(goome_a11y_node, states), F(goome_a11y_node, x), F(goome_a11y_node, y), F(goome_a11y_node, w);
+    F(goome_a11y_node, h), F(goome_a11y_node, label), F(goome_a11y_node, value), F(goome_a11y_node, id), F(goome_a11y_node, num), F(goome_a11y_node, min);
+    F(goome_a11y_node, max), F(goome_a11y_node, caret);
+    E("EventType.Text", GOOME_TEXT), E("EventType.Preedit", GOOME_PREEDIT), E("EventType.Drop", GOOME_DROP);
+    E("Ease.Smooth", GOOME_EASE_SMOOTH), E("Ease.Linear", GOOME_EASE_LINEAR), E("Ease.Out", GOOME_EASE_OUT), E("Ease.InOut", GOOME_EASE_IN_OUT);
+    E("Ease.Back", GOOME_EASE_BACK), E("Ease.Custom", GOOME_EASE_CUSTOM), E("Ease.In", GOOME_EASE_IN), E("Ease.Spring", GOOME_EASE_SPRING);
+    E("Ease.Bounce", GOOME_EASE_BOUNCE);
+    E("TextDirection.Auto", GOOME_DIR_AUTO), E("TextDirection.Ltr", GOOME_DIR_LTR), E("TextDirection.Rtl", GOOME_DIR_RTL);
+    E("Role.None", GOOME_ROLE_NONE), E("Role.Window", GOOME_ROLE_WINDOW), E("Role.Button", GOOME_ROLE_BUTTON), E("Role.Checkbox", GOOME_ROLE_CHECKBOX);
+    E("Role.Radio", GOOME_ROLE_RADIO), E("Role.Slider", GOOME_ROLE_SLIDER), E("Role.Text", GOOME_ROLE_TEXT), E("Role.Input", GOOME_ROLE_INPUT);
+    E("Role.Combo", GOOME_ROLE_COMBO), E("Role.List", GOOME_ROLE_LIST), E("Role.Item", GOOME_ROLE_ITEM), E("Role.Tab", GOOME_ROLE_TAB);
+    E("Role.Menu", GOOME_ROLE_MENU), E("Role.MenuItem", GOOME_ROLE_MENUITEM), E("Role.Table", GOOME_ROLE_TABLE), E("Role.Tree", GOOME_ROLE_TREE);
+    E("Role.Progress", GOOME_ROLE_PROGRESS), E("Role.Image", GOOME_ROLE_IMAGE), E("Role.Group", GOOME_ROLE_GROUP), E("Role.Dialog", GOOME_ROLE_DIALOG);
+    E("A11yState.Focused", GOOME_A11Y_FOCUSED), E("A11yState.Checked", GOOME_A11Y_CHECKED), E("A11yState.Disabled", GOOME_A11Y_DISABLED);
+    E("A11yState.Expanded", GOOME_A11Y_EXPANDED), E("A11yState.Selected", GOOME_A11Y_SELECTED);
     return 0;
 }
