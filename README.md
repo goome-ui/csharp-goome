@@ -132,8 +132,8 @@ It isnt on NuGet, but every <a href="https://github.com/goome-ui/csharp-goome/re
 
 ```sh
 mkdir goome-pkgs
-curl -fsSL -o goome-pkgs/GoomeSharp.0.4.0.nupkg https://github.com/goome-ui/csharp-goome/releases/download/v0.4.0/GoomeSharp.0.4.0.nupkg
-dotnet add package GoomeSharp --version 0.4.0 --source ./goome-pkgs
+curl -fsSL -o goome-pkgs/GoomeSharp.0.5.0.nupkg https://github.com/goome-ui/csharp-goome/releases/download/v0.5.0/GoomeSharp.0.5.0.nupkg
+dotnet add package GoomeSharp --version 0.5.0 --source ./goome-pkgs
 ```
 
 <p align="center">
@@ -160,7 +160,7 @@ Swap the version in the lines above for any other one, like <code>0.2.0</code>. 
 </p>
 
 ```
-https://github.com/goome-ui/csharp-goome.git?path=/unity/com.goome-ui.goome#v0.4.0
+https://github.com/goome-ui/csharp-goome.git?path=/unity/com.goome-ui.goome#v0.5.0
 ```
 
 <p align="center">

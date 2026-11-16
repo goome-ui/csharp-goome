@@ -5,7 +5,7 @@
     <AssemblyName>GoomeMod</AssemblyName>
     <RootNamespace>GoomeUI.ModKit</RootNamespace>
     <UsesUnity>true</UsesUnity>
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
