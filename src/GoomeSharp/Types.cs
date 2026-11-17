@@ -33,6 +33,7 @@ namespace GoomeSharp
         OnTop = 8,
         Hidden = 16,
         Center = 32,
+        NoTitleBar = 64,
     }
 
     public enum CursorShape
