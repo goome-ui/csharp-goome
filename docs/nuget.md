@@ -38,4 +38,4 @@ for (bool on = true; on;)
 }
 ```
 
-Docs are at [goome-ui.github.io/docs](https://goome-ui.github.io/docs/), the code and the Unity package are at [goome-ui/csharp-goome](https://github.com/goome-ui/csharp-goome). GPL-3.0.
+Docs are at [goome.wtf/docs](https://goome.wtf/docs/), the code and the Unity package are at [goome-ui/csharp-goome](https://github.com/goome-ui/csharp-goome). GPL-3.0.

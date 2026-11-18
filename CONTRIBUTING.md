@@ -2,7 +2,7 @@
 
 <p align="center">
 Small PRs that fix one thing are way easier for me to check, so those get merged a lot faster.<br>
-This repo is only the C# side. If the bug is in goome itself (drawing, a backend, the ui kit) it goes to <a href="https://github.com/goome-ui/c-goome">c-goome</a>. Docs fixes go to the <a href="https://goome-ui.github.io/docs/">docs</a> and new example projects to <a href="https://github.com/goome-ui/examples">goome-ui/examples</a>.
+This repo is only the C# side. If the bug is in goome itself (drawing, a backend, the ui kit) it goes to <a href="https://github.com/goome-ui/c-goome">c-goome</a>. Docs fixes go to the <a href="https://goome.wtf/docs/">docs</a> and new example projects to <a href="https://github.com/goome-ui/examples">goome-ui/examples</a>.
 </p>
 
 <details>

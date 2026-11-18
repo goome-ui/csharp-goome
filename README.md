@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <img src="https://goome-ui.github.io/docs/assets/badges/csharp-net8-netstandard21.svg" alt=".NET 8+ and netstandard2.1">
-  <a href="https://www.nuget.org/packages/GoomeSharp"><img src="https://goome-ui.github.io/docs/assets/badges/nuget-goomesharp.svg" alt="NuGet"></a>
+  <img src="https://goome.wtf/badges/csharp-net8-netstandard21.svg" alt=".NET 8+ and netstandard2.1">
+  <a href="https://www.nuget.org/packages/GoomeSharp"><img src="https://goome.wtf/badges/nuget-goomesharp.svg" alt="NuGet"></a>
   <img src="https://img.shields.io/badge/Unity-2021.3%2B-1b1d22?style=flat-square&logo=unity&logoColor=white" alt="Unity 2021.3+">
   <img src="https://img.shields.io/badge/Linux-X11%20%2B%20Wayland-1b1d22?style=flat-square&logo=linux&logoColor=white" alt="Linux">
   <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-1b1d22?style=flat-square&logo=windows11&logoColor=white" alt="Windows">
@@ -19,8 +19,8 @@
 </p>
 
 <p align="center">
-  <a href="https://goome-ui.github.io/docs/"><b>📖 Docs</b></a> &nbsp;·&nbsp;
-  <a href="https://goome-ui.github.io/docs/builder/"><b>🧱 Builder</b></a> &nbsp;·&nbsp;
+  <a href="https://goome.wtf/docs/"><b>📖 Docs</b></a> &nbsp;·&nbsp;
+  <a href="https://goome.wtf/builder/"><b>🧱 Builder</b></a> &nbsp;·&nbsp;
   <a href="https://github.com/goome-ui/examples"><b>🧩 Examples</b></a> &nbsp;·&nbsp;
   <a href="https://github.com/goome-ui/c-goome">C</a> &nbsp;·&nbsp;
   <a href="https://github.com/goome-ui/python-goome">Python</a> &nbsp;·&nbsp;
@@ -29,14 +29,14 @@
 </p>
 
 <p align="center">
-  To see what goome can do, grab one of the <a href="https://goome-ui.github.io/docs/downloads/">ready made apps</a>, like the HUD or the crosshair. To start your own, <code>goome new my-app --lang csharp</code> from <a href="https://github.com/goome-ui/goome-cli">goome-cli</a> makes it from a <a href="https://goome-ui.github.io/docs/templates/">template</a>.<br>
+  To see what goome can do, grab one of the <a href="https://goome.wtf/docs/downloads/">ready made apps</a>, like the HUD or the crosshair. To start your own, <code>goome new my-app --lang csharp</code> from <a href="https://github.com/goome-ui/goome-cli">goome-cli</a> makes it from a <a href="https://goome.wtf/docs/templates/">template</a>.<br>
   Questions go in <a href="https://github.com/goome-ui/c-goome/discussions">Discussions</a>. If you want to help, the <a href="https://github.com/goome-ui/csharp-goome/labels/good%20first%20issue">good first issues</a> are small ones to start with.
 </p>
 
 <p align="center">
   This is <a href="https://github.com/goome-ui/c-goome">goome</a> for C#. Same ui kit for click-through overlays and plain app windows. It can draw into a Unity texture too, and <code>mods/</code> has mod menu templates for BepInEx and MelonLoader.<br>
   Its the real C library underneath (built as a shared lib and called with P/Invoke), wrapped so it feels like normal .NET with <code>using</code> blocks and <code>Span&lt;uint&gt;</code> pixels.<br> <br>
-  The docs are at <a href="https://goome-ui.github.io/docs/">goome-ui.github.io/docs</a>. If you'd rather drag widgets around than write them, the <a href="https://goome-ui.github.io/docs/builder/">ui builder</a> spits out the code. <a href="https://github.com/goome-ui/examples">goome-ui/examples</a> has a pile of small real projects, C# ones included.<br> <br>
+  The docs are at <a href="https://goome.wtf/docs/">goome.wtf/docs</a>. If you'd rather drag widgets around than write them, the <a href="https://goome.wtf/builder/">ui builder</a> spits out the code. <a href="https://github.com/goome-ui/examples">goome-ui/examples</a> has a pile of small real projects, C# ones included.<br> <br>
   Same library from other languages: <a href="https://github.com/goome-ui/c-goome">C</a>, <a href="https://github.com/goome-ui/python-goome">Python</a>, <a href="https://github.com/goome-ui/java-goome">Java</a> (with Fabric and NeoForge mods) and <a href="https://github.com/goome-ui/godot-goome">Godot</a>.
 </p>
 
@@ -246,7 +246,7 @@ for (bool running = true; running;)
 <code>ui.Theme</code> holds every color and size the kit uses, plus the font, and <code>ui.Theme.Light()</code> / <code>Dark()</code> flip the whole thing at once. You can also set single fields like <code>ui.Theme.Accent</code> or <code>ui.Theme.FontSize</code> if you only want your own accent color or a bigger font, they write straight into goome's theme.<br> <br>
 The values are yours, not the widgets. If you change <code>volume</code> from somewhere else the slider just shows the new value next frame. Same for window position and size, which is how you save and restore a layout: write <code>x</code>, <code>y</code>, <code>w</code> and <code>h</code> somewhere and pass them back in next time.<br> <br>
 <code>examples/UiDemo</code> shows off every widget, same as the C demo, and it's the easiest place to copy from.<br> <br>
-Some Begin calls need their End every time and some only when they returned true, same as in C, the <a href="https://goome-ui.github.io/docs/ui-app/">docs</a> list which is which.
+Some Begin calls need their End every time and some only when they returned true, same as in C, the <a href="https://goome.wtf/docs/ui-app/">docs</a> list which is which.
 </p>
 </details>
 
@@ -265,7 +265,7 @@ using (ui.Style(radius: 99, accent: 0xFFF59E0B)) ui.Button("Pill");
 ```
 
 <p align="center">
-Theres a lot more you can change, like your own widgets with <code>ui.Custom</code> or png icons and skins. It's all in the <a href="https://goome-ui.github.io/docs/">docs</a>, and <code>examples/Skinned</code> is a full reskinned app if you'd rather read code.
+Theres a lot more you can change, like your own widgets with <code>ui.Custom</code> or png icons and skins. It's all in the <a href="https://goome.wtf/docs/">docs</a>, and <code>examples/Skinned</code> is a full reskinned app if you'd rather read code.
 </p>
 </details>
 
