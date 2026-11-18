@@ -233,7 +233,7 @@ using (app)
         if (ui.ModalBegin("About Notes", ref about))
         {
             ui.Label($"Notes, a goome {Goome.Version} demo in C#");
-            if (ui.Link("goome-ui.github.io/docs")) ui.Toast("the docs are at goome-ui.github.io/docs", 2500);
+            if (ui.Link("goome.wtf/docs")) ui.Toast("the docs are at goome.wtf/docs", 2500);
             if (ui.Button("Nice")) ui.PopupClose();
             ui.ModalEnd();
         }

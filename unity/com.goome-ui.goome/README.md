@@ -86,7 +86,7 @@ It stays off in the editor unless you tick <code>runInEditor</code>, an overlay 
 <h3 align="center">📝 Good to know</h3>
 
 - Desktop only (Linux x64, Windows x64, macOS). No consoles, phones or WebGL
-- Everything goome has is in there, the [csharp-goome README](https://github.com/goome-ui/csharp-goome#readme) and the [docs](https://goome-ui.github.io/docs/) cover it
+- Everything goome has is in there, the [csharp-goome README](https://github.com/goome-ui/csharp-goome#readme) and the [docs](https://goome.wtf/docs/) cover it
 - [goome-ui/examples](https://github.com/goome-ui/examples) has a Unity project skeleton with both setups
 - Call goome from the main thread, Update is fine
 - In a linear color space project soft edges can look a tiny bit off, goome blends in sRGB
