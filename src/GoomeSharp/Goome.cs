@@ -6,7 +6,7 @@ namespace GoomeSharp
 {
     public sealed unsafe class Goome : IDisposable
     {
-        public const string Version = "0.5.3";
+        public const string Version = "0.5.5";
 
         IntPtr g;
         readonly Dictionary<IntPtr, Canvas> canvases = new();

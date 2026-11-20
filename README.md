@@ -159,7 +159,7 @@ Want your own package? <code>dotnet pack src/GoomeSharp -c Release -o out</code>
 </p>
 
 ```
-https://github.com/goome-ui/csharp-goome.git?path=/unity/com.goome-ui.goome#v0.5.3
+https://github.com/goome-ui/csharp-goome.git?path=/unity/com.goome-ui.goome#v0.5.5
 ```
 
 <p align="center">
