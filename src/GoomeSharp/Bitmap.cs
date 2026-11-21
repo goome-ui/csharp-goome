@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace GoomeSharp
 {
+    /// <summary>An image for drawing, loaded from a file or memory. Dispose it when you are done</summary>
     public sealed unsafe class Bitmap : IDisposable
     {
         RawBitmap* b;
@@ -10,8 +11,10 @@ namespace GoomeSharp
 
         Bitmap() => b = (RawBitmap*)Mem.Alloc(sizeof(RawBitmap));
 
+        /// <summary>Frees the pixels if you forgot to Dispose</summary>
         ~Bitmap() => Free();
 
+        /// <summary>Why the last load failed</summary>
         public static string LastError => Native.Str(Native.BitmapError()) ?? "";
 
         static Bitmap Check(Bitmap bm, int rc)
@@ -22,6 +25,7 @@ namespace GoomeSharp
             throw new GoomeException((GoomeError)rc, why);
         }
 
+        /// <summary>Loads png, jpeg, bmp, ppm or qoi. It picks by content, not by name</summary>
         public static Bitmap Load(string path)
         {
             var bm = new Bitmap();
@@ -30,6 +34,7 @@ namespace GoomeSharp
             return Check(bm, rc);
         }
 
+        /// <summary>Loads png, jpeg, bmp, ppm or qoi. It picks by content, not by name</summary>
         public static Bitmap Load(ReadOnlySpan<byte> data)
         {
             var bm = new Bitmap();
@@ -38,6 +43,7 @@ namespace GoomeSharp
             return Check(bm, rc);
         }
 
+        /// <summary>Copies plain argb pixels into a new bitmap</summary>
         public static Bitmap FromArgb(ReadOnlySpan<uint> argb, int width, int height)
         {
             if (width <= 0 || height <= 0 || argb.Length < (long)width * height) throw new ArgumentException("pixels too short for that size");
@@ -47,6 +53,9 @@ namespace GoomeSharp
             return Check(bm, rc);
         }
 
+        /// <summary>Wraps premultiplied pixels you already have, without copying</summary>
+        /// <param name="premultiplied">The pixels, keep the array alive</param>
+        /// <param name="stride">Row length in pixels, 0 = width</param>
         public static Bitmap Wrap(uint[] premultiplied, int width, int height, int stride = 0)
         {
             if (stride <= 0) stride = width;
@@ -62,14 +71,22 @@ namespace GoomeSharp
 
         internal RawBitmap* Ptr => b != null ? b : throw new ObjectDisposedException(nameof(Bitmap));
 
+        /// <summary>The raw c struct</summary>
         public ref RawBitmap Raw => ref *Ptr;
+        /// <summary>Width in px</summary>
         public int Width => Ptr->W;
+        /// <summary>Height in px</summary>
         public int Height => Ptr->H;
+        /// <summary>Row length in pixels</summary>
         public int Stride => Ptr->Stride;
+        /// <summary>True if goome owns the pixels and frees them</summary>
         public bool Owned => Ptr->Owned != 0;
+        /// <summary>True once Dispose has run</summary>
         public bool IsDisposed => b == null;
+        /// <summary>The pixels, premultiplied argb</summary>
         public Span<uint> Pixels => Ptr->Px == null ? default : new(b->Px, b->H <= 0 ? 0 : (b->H - 1) * b->Stride + b->W);
 
+        /// <summary>Frees the bitmap</summary>
         public void Dispose()
         {
             Free();
