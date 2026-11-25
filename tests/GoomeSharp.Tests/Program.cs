@@ -2659,6 +2659,27 @@ static class Program
         return Fnv(c.Pixels, c.Width, c.Height, c.Stride);
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static void DrawHeart(Ui u) => u.Image(Heart(), 60, 60);
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static void HeartButton(Ui u) => u.ImageButton("ib", Heart(), 60, 60);
+
+    static uint ImageFrame(Ui u, Action<Ui> draw)
+    {
+        double x = 8, y = 8, w = 300, h = 250;
+        var c = u.Begin(0);
+        if (c == null) return 0;
+        if (u.Window("Images", ref x, ref y, ref w, ref h))
+        {
+            draw(u);
+            Collect();
+        }
+        u.WindowEnd();
+        u.End();
+        return Fnv(c.Pixels, c.Width, c.Height, c.Stride);
+    }
+
     static void DressAll(Theme t)
     {
         var d = Dots();
@@ -2708,6 +2729,10 @@ static class Program
             return x;
         }) == h[4], "a pushed theme keeps its icons alive");
         Check(IconFrame(u, 0) == h[0]);
+        using var heart = Heart();
+        uint kept = ImageFrame(u, x => x.Image(heart, 60, 60));
+        Check(ImageFrame(u, DrawHeart) == kept, "an image with no other reference lives until the frame is sent");
+        Check(ImageFrame(u, x => x.ImageButton("ib", heart, 60, 60)) == ImageFrame(u, HeartButton), "same for an image button");
         foreach (var j in junk) j.Dispose();
         junk.Clear();
         Check(Throws<ArgumentOutOfRangeException>(() => u.PushIcon((Icon)22, null)) && Throws<ArgumentOutOfRangeException>(() => t.Icons[(Icon)(-1)] = null));

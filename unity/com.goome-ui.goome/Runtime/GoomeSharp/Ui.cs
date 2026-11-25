@@ -235,12 +235,17 @@ namespace GoomeSharp
         public bool ImageButton(string id, Bitmap b, double w, double h)
         {
             var hu = Handle;
+            Hold(b);
             fixed (byte* s = U8.A(id)) return Native.UiImageButton(hu, s, b.Ptr, w, h) != 0;
         }
 
         /// <summary>Draws a bitmap</summary>
         /// <param name="radius">Corner radius</param>
-        public void Image(Bitmap b, double w, double h, double radius = 0) => Native.UiImage(Handle, b.Ptr, w, h, radius);
+        public void Image(Bitmap b, double w, double h, double radius = 0)
+        {
+            Native.UiImage(Handle, b.Ptr, w, h, radius);
+            Hold(b);
+        }
 
         /// <summary>A checkbox</summary>
         /// <returns>True when it changed</returns>
